@@ -1,3 +1,3 @@
-FOUND = "Found"
+FOUND = "Check"
 
-NOT_FOUND = "Not Found"
+NOT_FOUND = "NA"

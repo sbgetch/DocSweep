@@ -19,7 +19,7 @@ if not root_logger.handlers:
     root_logger.setLevel(logging.INFO)
 
     formatter = logging.Formatter(
-        "%(asctime)s | %(name)-30s | %(levelname)-8s | %(message)s",
+        "%(asctime)s | %(name)-50s | %(levelname)-8s | %(message)s",
         "%Y-%m-%d %H:%M:%S"
     )
 

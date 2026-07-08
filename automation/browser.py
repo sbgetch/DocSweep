@@ -5,7 +5,7 @@ from selenium.webdriver.chrome.service import Service
 from automation.browser_manager import BrowserManager
 from utils.logger import get_logger
 
-logger = get_logger("Browser")
+logger = get_logger(__name__)
 
 class Browser:
 

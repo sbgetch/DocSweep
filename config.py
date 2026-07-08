@@ -1,9 +1,3 @@
-VERTIV_URL = "https://www.vertiv.com/en-us/"
-
-TIMEOUT = 15
-
-HEADLESS = False
-
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent

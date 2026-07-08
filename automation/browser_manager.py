@@ -2,7 +2,7 @@ from pathlib import Path
 from utils.logger import get_logger
 from utils.exceptions import BrowserNotFoundError
 
-logger = get_logger("BrowserManager")
+logger = get_logger(__name__)
 
 class BrowserManager:
 
