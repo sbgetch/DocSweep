@@ -50,6 +50,18 @@ class VertivSite(BaseSite):
         "div.product-tile-component.search-tile h3 a"
     )
 
+    def is_open(self) -> bool:
+
+        for handle in self.driver.window_handles:
+
+            self.driver.switch_to.window(handle)
+
+            if self.EXPECTED_HOST in self.driver.current_url.lower():
+
+                return True
+
+        return False
+
     def attach(self):
 
         logger.info("Looking for Vertiv tab.")

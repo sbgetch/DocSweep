@@ -6,11 +6,17 @@ __pycache__/
 # Virtual environment
 .venv/
 
-# Logs
-logs/
+# Input files
+input/*
+!input/.gitkeep
 
-# Output
-output/
+# Output files
+output/*
+!output/.gitkeep
+
+# Log files
+logs/*
+!logs/.gitkeep
 
 # Build
 build/
