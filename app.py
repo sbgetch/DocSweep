@@ -2,6 +2,8 @@ from automation.browser import Browser
 from automation.vertiv import VertivSite
 
 from excel.reader import ExcelReader
+from excel.writer import ExcelWriter
+
 from services.sweep_service import SweepService
 
 from utils.logger import get_logger
@@ -47,6 +49,13 @@ def main():
     for document in documents:
 
         logger.info(document)
+
+    writer = ExcelWriter()
+
+    writer.save(
+        "input/Sweep Tracker.xlsx",
+        documents
+    )
 
     input("\nSweep complete. Press ENTER to exit...")
 

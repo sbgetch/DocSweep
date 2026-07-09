@@ -1,7 +1,6 @@
 from openpyxl import load_workbook
 
 from config import (
-    EXCEL_SHEET,
     CONTROL_NUMBER_COLUMN,
     FIRST_DATA_ROW
 )
@@ -21,7 +20,9 @@ class ExcelReader:
 
         workbook = load_workbook(file_path)
 
-        worksheet = workbook[EXCEL_SHEET]
+        worksheet = workbook.worksheets[0]
+
+        logger.info(f"Using worksheet: {worksheet.title}")
 
         documents = []
 

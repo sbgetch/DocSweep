@@ -25,10 +25,18 @@ class SweepService:
                 f"Sweeping {document.control_number}"
             )
 
-            result = self.vertiv.search(
-                document.control_number
-            )
+            try:
+                result = self.vertiv.search(
+                    document.control_number
+                )
 
-            document.vertiv = result.message
+                document.vertiv = result.message
+
+            except Exception:
+                logger.exception(
+                    f"Failed to sweep {document.control_number}"
+                )
+
+                document.vertiv = "ERROR"
 
         logger.info("Sweep complete.")
