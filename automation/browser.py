@@ -15,9 +15,6 @@ class Browser:
 
     def start(self):
 
-        # Validate browser files exist
-        logger.info("Launching Chrome for Testing...")
-
         self.manager.validate()
 
         options = Options()
@@ -28,6 +25,11 @@ class Browser:
 
         options.add_argument("--start-maximized")
 
+        options.set_capability(
+            "goog:loggingPrefs",
+            {"performance": "ALL"}
+        )
+
         self.driver = webdriver.Chrome(
             service=Service(
                 str(self.manager.get_driver_path())
@@ -35,7 +37,7 @@ class Browser:
             options=options
         )
 
-        logger.info("Browser launched successfully.")
+        self.driver.execute_cdp_cmd("Network.enable", {})
 
         return self.driver
 

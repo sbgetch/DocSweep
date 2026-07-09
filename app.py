@@ -1,6 +1,9 @@
 from automation.browser import Browser
 from automation.vertiv import VertivSite
 
+from excel.reader import ExcelReader
+from services.sweep_service import SweepService
+
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -31,9 +34,19 @@ def main():
 
     vertiv.prepare_search()
 
-    result = vertiv.search("SL-71029")
+    reader = ExcelReader()
 
-    logger.info(result)
+    documents = reader.read(
+        "input/Sweep Tracker.xlsx"
+    )
+
+    service = SweepService(driver)
+
+    service.sweep(documents)
+
+    for document in documents:
+
+        logger.info(document)
 
     input("\nSweep complete. Press ENTER to exit...")
 
