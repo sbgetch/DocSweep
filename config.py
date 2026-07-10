@@ -18,6 +18,16 @@ CHROMEDRIVER = (
 
 TIMEOUT = 15
 
+# SITES
+VERTIV_URL = "https://www.vertiv.com/en-us/"
+
+ASSET_LIBRARY_URL = "https://asset-library.vertiv.com/#/home?tabName=HOME"
+
+ORACLE_URL = "https://egup.fa.us2.oraclecloud.com/"
+
+MASW_URL = (
+    "https://amerplmpwiap01.int.vertivco.com/File_Display_MBD/faces/UserManualDisplay.xhtml"
+)
 
 # EXCEL
 CONTROL_NUMBER_COLUMN = "A"

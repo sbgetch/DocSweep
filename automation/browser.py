@@ -5,6 +5,13 @@ from selenium.webdriver.chrome.service import Service
 from automation.browser_manager import BrowserManager
 from utils.logger import get_logger
 
+from config import (
+    VERTIV_URL,
+    ASSET_LIBRARY_URL,
+    ORACLE_URL,
+    MASW_URL
+)
+
 logger = get_logger(__name__)
 
 class Browser:
@@ -40,6 +47,21 @@ class Browser:
         self.driver.execute_cdp_cmd("Network.enable", {})
 
         return self.driver
+    
+    def open_startup_tabs(self):
+
+        urls = [
+            VERTIV_URL,
+            ASSET_LIBRARY_URL,
+            ORACLE_URL,
+            MASW_URL
+        ]
+
+        self.driver.get(urls[0])
+
+        for url in urls[1:]:
+            self.driver.switch_to.new_window("tab")
+            self.driver.get(url)
 
     def stop(self):
         if self.driver:

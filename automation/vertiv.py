@@ -16,7 +16,6 @@ logger = get_logger(__name__)
 
 class VertivSite(BaseSite):
 
-    URL = "https://www.vertiv.com/en-us/"
     EXPECTED_HOST = "vertiv.com"
 
     EXPANDED_CLASS = "search-is-expanded"
@@ -69,12 +68,32 @@ class VertivSite(BaseSite):
             "Vertiv website is not open."
         )
 
+    def search(
+        self,
+        control_number: str
+    ) -> SearchResult:
+
+        self.prepare_search()
+
+        self.execute_search(control_number)
+
+        if self.has_no_results():
+            return self.build_not_found_result()
+
+        return self.find_matching_result(
+            control_number
+        )
+
     def prepare_search(self):
 
         logger.info("Preparing Vertiv search.")
 
         if self.is_search_expanded():
-            logger.info("Search is already expanded.")
+
+            logger.info(
+                "Search is already expanded."
+            )
+
             return
 
         logger.info("Expanding search.")
@@ -93,18 +112,10 @@ class VertivSite(BaseSite):
 
         logger.info("Search expanded.")
 
-    def search(self, control_number: str) -> SearchResult:
-
-        self.prepare_search()
-
-        self.execute_search(control_number)
-
-        if self.has_no_results():
-            return self.build_not_found_result()
-
-        return self.find_matching_result(control_number)
-    
-    def execute_search(self, control_number: str):
+    def execute_search(
+        self,
+        control_number: str
+    ):
 
         logger.info(
             f"Searching control number: {control_number}"
@@ -115,7 +126,7 @@ class VertivSite(BaseSite):
             self.SEARCH_INPUT
         )
 
-        # Clear old network events
+        # Clear previous network events
         self.driver.get_log("performance")
 
         search.clear()
@@ -129,7 +140,10 @@ class VertivSite(BaseSite):
 
         logger.info("Search completed.")
 
-    def find_matching_result(self, control_number: str) -> SearchResult:
+    def find_matching_result(
+        self,
+        control_number: str
+    ) -> SearchResult:
 
         WaitHelper.present(
             self.driver,
@@ -150,27 +164,23 @@ class VertivSite(BaseSite):
                     f"Document '{control_number}' found."
                 )
 
-                return SearchResult(
-                    site=Site.VERTIV,
-                    found=True,
-                    message=FOUND
-                )
+                return self.build_found_result()
 
         logger.info(
             "Search returned documents, but none matched."
         )
 
         return self.build_not_found_result()
-    
-    def build_found_result(self):
+
+    def build_found_result(self) -> SearchResult:
 
         return SearchResult(
             site=Site.VERTIV,
             found=True,
             message=FOUND
         )
-    
-    def build_not_found_result(self):
+
+    def build_not_found_result(self) -> SearchResult:
 
         return SearchResult(
             site=Site.VERTIV,
@@ -196,7 +206,7 @@ class VertivSite(BaseSite):
             element.text.strip()
             for element in elements
         ]
-        
+
     def is_search_expanded(self) -> bool:
 
         form = self.driver.find_element(
@@ -206,4 +216,4 @@ class VertivSite(BaseSite):
         return (
             self.EXPANDED_CLASS
             in form.get_attribute("class")
-        ) 
+        )

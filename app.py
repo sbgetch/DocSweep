@@ -1,5 +1,4 @@
 from automation.browser import Browser
-from automation.vertiv import VertivSite
 
 from excel.reader import ExcelReader
 from excel.writer import ExcelWriter
@@ -18,23 +17,13 @@ def main():
     browser = Browser()
     driver = browser.start()
 
+    browser.open_startup_tabs()
+
     logger.info("Browser launched.")
 
     input(
-        "\n"
-        "Prepare the required websites:\n"
-        "  • Vertiv\n"
-        "  • Asset Library\n"
-        "  • Oracle\n"
-        "  • MASW\n\n"
-        "Log in to the sites, then press ENTER to start the sweep..."
+        "Prepare the websites and log in to the sites, then press ENTER to start the sweep..."
     )
-
-    vertiv = VertivSite(driver)
-
-    vertiv.attach()
-
-    vertiv.prepare_search()
 
     reader = ExcelReader()
 
@@ -45,10 +34,6 @@ def main():
     service = SweepService(driver)
 
     service.sweep(documents)
-
-    for document in documents:
-
-        logger.info(document)
 
     writer = ExcelWriter()
 
