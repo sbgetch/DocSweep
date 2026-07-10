@@ -1,5 +1,6 @@
 from automation.vertiv import VertivSite
 from automation.asset_library import AssetLibrarySite
+from automation.pd_cloud import PDCloudSite
 
 from utils.logger import get_logger
 
@@ -12,6 +13,7 @@ class SweepService:
 
         self.vertiv = VertivSite(driver)
         self.asset_library = AssetLibrarySite(driver)
+        self.pd_cloud = PDCloudSite(driver)
 
     def sweep(self, documents):
 
@@ -19,7 +21,9 @@ class SweepService:
             f"Starting sweep for {len(documents)} document(s)."
         )
 
+        # --------------------------------------------------
         # Vertiv
+        # --------------------------------------------------
 
         logger.info("Starting Vertiv sweep.")
 
@@ -49,7 +53,9 @@ class SweepService:
 
         logger.info("Vertiv sweep complete.")
 
+        # --------------------------------------------------
         # Asset Library
+        # --------------------------------------------------
 
         logger.info("Starting Asset Library sweep.")
 
@@ -78,5 +84,37 @@ class SweepService:
                 document.asset_library = "ERROR"
 
         logger.info("Asset Library sweep complete.")
+
+        # --------------------------------------------------
+        # PD Cloud
+        # --------------------------------------------------
+
+        logger.info("Starting PD Cloud sweep.")
+
+        self.pd_cloud.attach()
+
+        for document in documents:
+
+            logger.info(
+                f"PD Cloud: {document.control_number}"
+            )
+
+            try:
+
+                result = self.pd_cloud.search(
+                    document.control_number
+                )
+
+                document.pd_cloud = result.message
+
+            except Exception:
+
+                logger.exception(
+                    f"PD Cloud failed: {document.control_number}"
+                )
+
+                document.pd_cloud = "ERROR"
+
+        logger.info("PD Cloud sweep complete.")
 
         logger.info("Sweep complete.")
