@@ -1,6 +1,6 @@
 import time
 
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import (TimeoutException, StaleElementReferenceException)
 from selenium.webdriver.common.by import By
 
 from automation.base_site import BaseSite
@@ -164,7 +164,7 @@ class PDCloudSite(BaseSite):
         )
 
         #
-        # Busy indicator may appear very briefly.
+        # Busy appears.
         #
 
         try:
@@ -175,13 +175,7 @@ class PDCloudSite(BaseSite):
 
                 lambda driver:
 
-                    self.BUSY_CLASS
-
-                    in
-
-                    driver.find_element(
-                        *self.RESULT_TABLE
-                    ).get_attribute("class"),
+                    self.table_is_busy(),
 
                 timeout=2
 
@@ -191,8 +185,9 @@ class PDCloudSite(BaseSite):
 
             pass
 
+
         #
-        # Wait until busy disappears.
+        # Busy disappears.
         #
 
         WaitHelper.until(
@@ -201,13 +196,7 @@ class PDCloudSite(BaseSite):
 
             lambda driver:
 
-                self.BUSY_CLASS
-
-                not in
-
-                driver.find_element(
-                    *self.RESULT_TABLE
-                ).get_attribute("class"),
+                not self.table_is_busy(),
 
             timeout=timeout
 
@@ -249,6 +238,33 @@ class PDCloudSite(BaseSite):
             "PD Cloud search finished."
         )
 
+    def table_is_busy(self):
+
+        try:
+
+            table = self.driver.find_element(
+                *self.RESULT_TABLE
+            )
+
+            return (
+
+                self.BUSY_CLASS
+
+                in
+
+                table.get_attribute("class")
+
+            )
+
+        except StaleElementReferenceException:
+
+            #
+            # Oracle replaced the table.
+            # Treat it as still busy.
+            #
+
+            return True
+
     def has_no_results(
         self
     ) -> bool:
@@ -264,7 +280,7 @@ class PDCloudSite(BaseSite):
         if elements:
 
             logger.info(
-                "Oracle returned 'No results found.'"
+                "PD Cloud returned 'No results found.'"
             )
 
             return True
