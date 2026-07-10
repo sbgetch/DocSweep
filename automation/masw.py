@@ -1,0 +1,191 @@
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+
+from automation.base_site import BaseSite
+
+from models.search_result import SearchResult
+from models.site import Site
+
+from utils.constants import FOUND, NOT_FOUND
+from utils.logger import get_logger
+from utils.wait_helper import WaitHelper
+
+logger = get_logger(__name__)
+
+
+class MASWSite(BaseSite):
+
+    EXPECTED_HOST = "amerplmpwiap01.int.vertivco.com"
+
+    SEARCH_INPUT = (
+        By.ID,
+        "mcpForm:attValue"
+    )
+
+    SEARCH_BUTTON = (
+        By.ID,
+        "mcpForm:advancedSearchButton"
+    )
+
+    SEARCH_STATUS = (
+        By.ID,
+        "mcpForm:itemDetailTable:j_idt23"
+    )
+
+    RESULT_ROWS = (
+        By.CSS_SELECTOR,
+        "#mcpForm\\:itemDetailTable_data tr[data-ri]"
+    )
+
+    NO_RESULTS = (
+        By.XPATH,
+        "//td[contains(., 'No Item found with the given Criteria')]"
+    )
+
+    def attach(self):
+
+        logger.info("Looking for MASW tab.")
+
+        for handle in self.driver.window_handles:
+
+            self.driver.switch_to.window(handle)
+
+            if self.EXPECTED_HOST in self.driver.current_url.lower():
+
+                logger.info("MASW tab found.")
+
+                return
+
+        raise RuntimeError(
+            "MASW tab is not open."
+        )
+
+    def search(
+        self,
+        control_number: str
+    ) -> SearchResult:
+
+        self.execute_search(
+            control_number
+        )
+
+        if self.has_no_results():
+
+            logger.info(
+                "No matching document."
+            )
+
+            return self.build_not_found_result()
+
+        logger.info(
+            "Search returned one or more result(s)."
+        )
+
+        return self.build_found_result()
+
+    def execute_search(
+        self,
+        control_number: str
+    ):
+
+        logger.info(
+            f"Searching control number: {control_number}"
+        )
+
+        search = WaitHelper.clickable(
+            self.driver,
+            self.SEARCH_INPUT
+        )
+
+        search.clear()
+
+        search.send_keys(
+            control_number
+        )
+
+        button = WaitHelper.clickable(
+            self.driver,
+            self.SEARCH_BUTTON
+        )
+
+        button.click()
+
+        self.wait_for_search_complete(
+            control_number
+        )
+
+        logger.info(
+            "Search completed."
+        )
+
+    def wait_for_search_complete(
+        self,
+        control_number: str,
+        timeout=30
+    ):
+
+        logger.info(
+            "Waiting for MASW search."
+        )
+
+        WaitHelper.until(
+
+            self.driver,
+
+            lambda driver:
+
+                control_number.upper()
+
+                in
+
+                driver.find_element(
+                    *self.SEARCH_STATUS
+                ).text.upper(),
+
+            timeout=timeout
+
+        )
+
+        logger.info(
+            "MASW search finished."
+        )
+
+    def has_no_results(
+        self
+    ) -> bool:
+
+        return bool(
+
+            self.driver.find_elements(
+                *self.NO_RESULTS
+            )
+
+        )
+
+    def build_found_result(
+        self
+    ) -> SearchResult:
+
+        return SearchResult(
+
+            site=Site.MASW,
+
+            found=True,
+
+            message=FOUND
+
+        )
+
+    def build_not_found_result(
+        self
+    ) -> SearchResult:
+
+        return SearchResult(
+
+            site=Site.MASW,
+
+            found=False,
+
+            message=NOT_FOUND
+
+        )

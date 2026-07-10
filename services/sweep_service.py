@@ -1,6 +1,7 @@
 from automation.vertiv import VertivSite
 from automation.asset_library import AssetLibrarySite
 from automation.pd_cloud import PDCloudSite
+from automation.masw import MASWSite
 
 from utils.logger import get_logger
 
@@ -14,6 +15,7 @@ class SweepService:
         self.vertiv = VertivSite(driver)
         self.asset_library = AssetLibrarySite(driver)
         self.pd_cloud = PDCloudSite(driver)
+        self.masw = MASWSite(driver)
 
     def sweep(self, documents):
 
@@ -116,5 +118,37 @@ class SweepService:
                 document.pd_cloud = "ERROR"
 
         logger.info("PD Cloud sweep complete.")
+
+        # --------------------------------------------------
+        # MASW
+        # --------------------------------------------------
+
+        logger.info("Starting MASW sweep.")
+
+        self.masw.attach()
+
+        for document in documents:
+
+            logger.info(
+                f"MASW: {document.control_number}"
+            )
+
+            try:
+
+                result = self.masw.search(
+                    document.control_number
+                )
+
+                document.masw = result.message
+
+            except Exception:
+
+                logger.exception(
+                    f"MASW failed: {document.control_number}"
+                )
+
+                document.masw = "ERROR"
+
+        logger.info("MASW sweep complete.")
 
         logger.info("Sweep complete.")
