@@ -37,10 +37,10 @@ class AssetLibrarySite(BaseSite):
         "//span[text()='No Assets Found']"
     )
 
-    RESULT_TITLES = (
-        By.XPATH,
-        "//tbody//td[2]//div[@title]"
-    )
+    # RESULT_TITLES = (
+    #     By.XPATH,
+    #     "//tbody//td[2]//div[@title]"
+    # )
 
     def attach(self):
 
@@ -210,21 +210,21 @@ class AssetLibrarySite(BaseSite):
 
         )
 
-    def get_result_titles(self) -> list[str]:
+    # def get_result_titles(self) -> list[str]:
 
-        elements = self.driver.find_elements(
-            *self.RESULT_TITLES
-        )
+    #     elements = self.driver.find_elements(
+    #         *self.RESULT_TITLES
+    #     )
 
-        return [
+    #     return [
 
-            element.get_attribute("title").strip()
+    #         element.get_attribute("title").strip()
 
-            for element in elements
+    #         for element in elements
 
-            if element.get_attribute("title")
+    #         if element.get_attribute("title")
 
-        ]
+    #     ]
 
     def search(
         self,
@@ -255,32 +255,36 @@ class AssetLibrarySite(BaseSite):
                 message=NOT_FOUND
             )
 
-        titles = self.get_result_titles()
+        # titles = self.get_result_titles()
+
+        # logger.info(
+        #     f"{len(titles)} search result(s) found."
+        # )
+
+        # for title in titles:
+
+        #     if control_number.upper() in title.upper():
+
+        #         logger.info(
+        #             f"Document '{control_number}' found."
+        #         )
+
+        #         return SearchResult(
+        #             site=Site.ASSET_LIBRARY,
+        #             found=True,
+        #             message=FOUND
+        #         )
+
+        # logger.info(
+        #     "Search returned documents, but none matched."
+        # )
 
         logger.info(
-            f"{len(titles)} search result(s) found."
-        )
-
-        for title in titles:
-
-            if control_number.upper() in title.upper():
-
-                logger.info(
-                    f"Document '{control_number}' found."
-                )
-
-                return SearchResult(
-                    site=Site.ASSET_LIBRARY,
-                    found=True,
-                    message=FOUND
-                )
-
-        logger.info(
-            "Search returned documents, but none matched."
+            "Search returned one or more result(s)."
         )
 
         return SearchResult(
             site=Site.ASSET_LIBRARY,
-            found=False,
-            message=NOT_FOUND
+            found=True,
+            message=FOUND
         )

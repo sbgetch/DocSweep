@@ -1,5 +1,6 @@
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import (TimeoutException, StaleElementReferenceException)
 
 from automation.base_site import BaseSite
 
@@ -134,21 +135,43 @@ class MASWSite(BaseSite):
 
             lambda driver:
 
-                control_number.upper()
-
-                in
-
-                driver.find_element(
-                    *self.SEARCH_STATUS
-                ).text.upper(),
+                self.search_status_matches(
+                    control_number
+                ),
 
             timeout=timeout
 
         )
 
-        logger.info(
-            "MASW search finished."
-        )
+    def search_status_matches(
+        self,
+        control_number: str
+    ) -> bool:
+
+        try:
+
+            text = self.driver.find_element(
+                *self.SEARCH_STATUS
+            ).text.upper()
+
+            return (
+
+                control_number.upper()
+
+                in
+
+                text
+
+            )
+
+        except StaleElementReferenceException:
+
+            #
+            # PrimeFaces is refreshing the panel.
+            # Continue waiting.
+            #
+
+            return False
 
     def has_no_results(
         self
