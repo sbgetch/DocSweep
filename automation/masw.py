@@ -29,8 +29,8 @@ class MASWSite(BaseSite):
     )
 
     SEARCH_STATUS = (
-        By.ID,
-        "mcpForm:itemDetailTable:j_idt23"
+        By.CSS_SELECTOR,
+        "#mcpForm\\:itemDetailTable .ui-datatable-header label:first-of-type"
     )
 
     RESULT_ROWS = (
