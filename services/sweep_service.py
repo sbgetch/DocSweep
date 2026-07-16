@@ -1,3 +1,6 @@
+import time
+from datetime import timedelta
+
 from selenium.common.exceptions import (
     NoSuchElementException,
     NoSuchWindowException,
@@ -28,10 +31,13 @@ class SweepService:
         self.masw = MASWSite(driver)
 
     def sweep(self, documents):
-
+        
+        overall_start = time.perf_counter()
+        
         logger.info(
             f"Starting sweep for {len(documents)} document(s)."
         )
+
 
         self.sweep_site(
             site=self.vertiv,
@@ -61,6 +67,16 @@ class SweepService:
             documents=documents
         )
 
+        overall_elapsed = timedelta(
+            seconds=round(
+                time.perf_counter() - overall_start
+            )
+        )
+
+        logger.info(
+            f"Overall elapsed: {overall_elapsed}"
+        )
+
         logger.info("Sweep complete.")
 
     def sweep_site(
@@ -74,6 +90,8 @@ class SweepService:
         logger.info(
             f"Starting {site_name} sweep."
         )
+
+        start_time = time.perf_counter()
 
         site.attach()
 
@@ -142,6 +160,12 @@ class SweepService:
             f"{site_name} sweep complete."
         )
 
+        elapsed = timedelta(
+            seconds=round(
+                time.perf_counter() - start_time
+            )
+        )
+
         logger.info(
             f"{site_name} Summary"
         )
@@ -156,6 +180,10 @@ class SweepService:
 
         logger.info(
             f"  Errors    : {errors}"
+        )
+
+        logger.info(
+            f"  Elapsed   : {elapsed}"
         )
 
     def log_progress(
