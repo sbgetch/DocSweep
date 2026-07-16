@@ -37,11 +37,6 @@ class AssetLibrarySite(BaseSite):
         "//span[text()='No Assets Found']"
     )
 
-    # RESULT_TITLES = (
-    #     By.XPATH,
-    #     "//tbody//td[2]//div[@title]"
-    # )
-
     def attach(self):
 
         logger.info("Looking for Asset Library tab.")
@@ -99,23 +94,7 @@ class AssetLibrarySite(BaseSite):
 
         )
 
-        #
-        # Wait until loading finishes.
-        #
-
-        WaitHelper.until(
-
-            self.driver,
-
-            lambda driver:
-
-                "Loading..." not in driver.page_source
-
-        )
-
-        #
-        # Ensure the search box is ready again.
-        #
+        self.wait_until_loading_complete()
 
         WaitHelper.clickable(
             self.driver,
@@ -144,15 +123,21 @@ class AssetLibrarySite(BaseSite):
 
         search.clear()
 
-        search.send_keys(control_number)
+        search.send_keys(
+            control_number
+        )
 
-        search.send_keys(Keys.ENTER)
+        search.send_keys(
+            Keys.ENTER
+        )
 
         self.wait_for_search_complete(
             control_number
         )
 
-        logger.info("Search completed.")
+        logger.info(
+            "Search completed."
+        )
 
     def wait_for_search_complete(
         self,
@@ -174,6 +159,10 @@ class AssetLibrarySite(BaseSite):
                 )
 
         )
+
+        self.wait_until_loading_complete()
+
+    def wait_until_loading_complete(self):
 
         WaitHelper.until(
 
@@ -210,21 +199,23 @@ class AssetLibrarySite(BaseSite):
 
         )
 
-    # def get_result_titles(self) -> list[str]:
+    def has_no_results(
+        self
+    ) -> bool:
 
-    #     elements = self.driver.find_elements(
-    #         *self.RESULT_TITLES
-    #     )
+        elements = self.driver.find_elements(
+            *self.NO_RESULTS
+        )
 
-    #     return [
+        return (
 
-    #         element.get_attribute("title").strip()
+            bool(elements)
 
-    #         for element in elements
+            and
 
-    #         if element.get_attribute("title")
+            elements[0].is_displayed()
 
-    #     ]
+        )
 
     def search(
         self,
@@ -235,56 +226,44 @@ class AssetLibrarySite(BaseSite):
             control_number
         )
 
-        elements = self.driver.find_elements(
-            *self.NO_RESULTS
-        )
-
-        if (
-            elements
-            and
-            elements[0].is_displayed()
-        ):
+        if self.has_no_results():
 
             logger.info(
                 "No matching document."
             )
 
-            return SearchResult(
-                site=Site.ASSET_LIBRARY,
-                found=False,
-                message=NOT_FOUND
-            )
-
-        # titles = self.get_result_titles()
-
-        # logger.info(
-        #     f"{len(titles)} search result(s) found."
-        # )
-
-        # for title in titles:
-
-        #     if control_number.upper() in title.upper():
-
-        #         logger.info(
-        #             f"Document '{control_number}' found."
-        #         )
-
-        #         return SearchResult(
-        #             site=Site.ASSET_LIBRARY,
-        #             found=True,
-        #             message=FOUND
-        #         )
-
-        # logger.info(
-        #     "Search returned documents, but none matched."
-        # )
+            return self.build_not_found_result()
 
         logger.info(
             "Search returned one or more result(s)."
         )
 
+        return self.build_found_result()
+
+    def build_found_result(
+        self
+    ) -> SearchResult:
+
         return SearchResult(
+
             site=Site.ASSET_LIBRARY,
+
             found=True,
+
             message=FOUND
+
+        )
+
+    def build_not_found_result(
+        self
+    ) -> SearchResult:
+
+        return SearchResult(
+
+            site=Site.ASSET_LIBRARY,
+
+            found=False,
+
+            message=NOT_FOUND
+
         )
