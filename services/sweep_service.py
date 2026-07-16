@@ -1,3 +1,11 @@
+from selenium.common.exceptions import (
+    NoSuchElementException,
+    NoSuchWindowException,
+    StaleElementReferenceException,
+    TimeoutException,
+    WebDriverException
+)
+
 from automation.vertiv import VertivSite
 from automation.asset_library import AssetLibrarySite
 from automation.pd_cloud import PDCloudSite
@@ -23,9 +31,9 @@ class SweepService:
             f"Starting sweep for {len(documents)} document(s)."
         )
 
-        # --------------------------------------------------
+        #
         # Vertiv
-        # --------------------------------------------------
+        #
 
         logger.info("Starting Vertiv sweep.")
 
@@ -37,27 +45,21 @@ class SweepService:
                 f"Vertiv: {document.control_number}"
             )
 
-            try:
+            self.execute_search(
 
-                result = self.vertiv.search(
-                    document.control_number
-                )
+                site=self.vertiv,
 
-                document.vertiv = result.message
+                document=document,
 
-            except Exception:
+                attribute="vertiv"
 
-                logger.exception(
-                    f"Vertiv failed: {document.control_number}"
-                )
-
-                document.vertiv = "ERROR"
+            )
 
         logger.info("Vertiv sweep complete.")
 
-        # --------------------------------------------------
+        #
         # Asset Library
-        # --------------------------------------------------
+        #
 
         logger.info("Starting Asset Library sweep.")
 
@@ -69,27 +71,21 @@ class SweepService:
                 f"Asset Library: {document.control_number}"
             )
 
-            try:
+            self.execute_search(
 
-                result = self.asset_library.search(
-                    document.control_number
-                )
+                site=self.asset_library,
 
-                document.asset_library = result.message
+                document=document,
 
-            except Exception:
+                attribute="asset_library"
 
-                logger.exception(
-                    f"Asset Library failed: {document.control_number}"
-                )
-
-                document.asset_library = "ERROR"
+            )
 
         logger.info("Asset Library sweep complete.")
 
-        # --------------------------------------------------
+        #
         # PD Cloud
-        # --------------------------------------------------
+        #
 
         logger.info("Starting PD Cloud sweep.")
 
@@ -101,27 +97,21 @@ class SweepService:
                 f"PD Cloud: {document.control_number}"
             )
 
-            try:
+            self.execute_search(
 
-                result = self.pd_cloud.search(
-                    document.control_number
-                )
+                site=self.pd_cloud,
 
-                document.pd_cloud = result.message
+                document=document,
 
-            except Exception:
+                attribute="pd_cloud"
 
-                logger.exception(
-                    f"PD Cloud failed: {document.control_number}"
-                )
-
-                document.pd_cloud = "ERROR"
+            )
 
         logger.info("PD Cloud sweep complete.")
 
-        # --------------------------------------------------
+        #
         # MASW
-        # --------------------------------------------------
+        #
 
         logger.info("Starting MASW sweep.")
 
@@ -133,22 +123,106 @@ class SweepService:
                 f"MASW: {document.control_number}"
             )
 
-            try:
+            self.execute_search(
 
-                result = self.masw.search(
-                    document.control_number
-                )
+                site=self.masw,
 
-                document.masw = result.message
+                document=document,
 
-            except Exception:
+                attribute="masw"
 
-                logger.exception(
-                    f"MASW failed: {document.control_number}"
-                )
-
-                document.masw = "ERROR"
+            )
 
         logger.info("MASW sweep complete.")
 
         logger.info("Sweep complete.")
+
+    def execute_search(
+        self,
+        site,
+        document,
+        attribute: str
+    ):
+
+        try:
+
+            result = site.search(
+                document.control_number
+            )
+
+            setattr(
+                document,
+                attribute,
+                result.message
+            )
+
+        except Exception as exception:
+
+            logger.exception(
+
+                f"{attribute.replace('_', ' ').title()} failed: "
+                f"{document.control_number} "
+                f"({self.get_error_reason(exception)})"
+
+            )
+
+            setattr(
+                document,
+                attribute,
+                "ERROR"
+            )
+
+    def get_error_reason(
+        self,
+        exception: Exception
+    ) -> str:
+
+        if isinstance(
+            exception,
+            TimeoutException
+        ):
+
+            return (
+                "Timed out waiting for search results."
+            )
+
+        if isinstance(
+            exception,
+            StaleElementReferenceException
+        ):
+
+            return (
+                "The page refreshed while searching."
+            )
+
+        if isinstance(
+            exception,
+            NoSuchElementException
+        ):
+
+            return (
+                "Expected page element was not found."
+            )
+
+        if isinstance(
+            exception,
+            NoSuchWindowException
+        ):
+
+            return (
+                "Browser tab was closed."
+            )
+
+        if isinstance(
+            exception,
+            WebDriverException
+        ):
+
+            return (
+                "WebDriver error occurred."
+            )
+
+        return (
+            f"Unexpected error: "
+            f"{type(exception).__name__}"
+        )
