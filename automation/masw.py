@@ -1,6 +1,7 @@
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import (TimeoutException, StaleElementReferenceException)
+from selenium.common.exceptions import (
+    StaleElementReferenceException
+)
 
 from automation.base_site import BaseSite
 
@@ -33,11 +34,6 @@ class MASWSite(BaseSite):
         "#mcpForm\\:itemDetailTable .ui-datatable-header label:first-of-type"
     )
 
-    RESULT_ROWS = (
-        By.CSS_SELECTOR,
-        "#mcpForm\\:itemDetailTable_data tr[data-ri]"
-    )
-
     NO_RESULTS = (
         By.XPATH,
         "//td[contains(., 'No Item found with the given Criteria')]"
@@ -66,6 +62,8 @@ class MASWSite(BaseSite):
         control_number: str
     ) -> SearchResult:
 
+        self.prepare_search()
+
         self.execute_search(
             control_number
         )
@@ -83,6 +81,14 @@ class MASWSite(BaseSite):
         )
 
         return self.build_found_result()
+
+    def prepare_search(self):
+
+        #
+        # Reserved for future setup.
+        #
+
+        return
 
     def execute_search(
         self,
@@ -116,7 +122,7 @@ class MASWSite(BaseSite):
         )
 
         logger.info(
-            "Search completed."
+            "MASW search completed."
         )
 
     def wait_for_search_complete(
@@ -128,6 +134,24 @@ class MASWSite(BaseSite):
         logger.info(
             "Waiting for MASW search."
         )
+
+        self.wait_for_status_update(
+
+            control_number,
+
+            timeout
+
+        )
+
+        logger.info(
+            "MASW search finished."
+        )
+
+    def wait_for_status_update(
+        self,
+        control_number: str,
+        timeout: int
+    ):
 
         WaitHelper.until(
 
@@ -167,8 +191,7 @@ class MASWSite(BaseSite):
         except StaleElementReferenceException:
 
             #
-            # PrimeFaces is refreshing the panel.
-            # Continue waiting.
+            # PrimeFaces refreshes the table.
             #
 
             return False
@@ -177,11 +200,17 @@ class MASWSite(BaseSite):
         self
     ) -> bool:
 
-        return bool(
+        elements = self.driver.find_elements(
+            *self.NO_RESULTS
+        )
 
-            self.driver.find_elements(
-                *self.NO_RESULTS
-            )
+        return (
+
+            bool(elements)
+
+            and
+
+            elements[0].is_displayed()
 
         )
 
