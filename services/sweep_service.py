@@ -15,6 +15,8 @@ from utils.logger import get_logger
 
 logger = get_logger(__name__)
 
+ERROR = "ERROR"
+
 
 class SweepService:
 
@@ -31,146 +33,146 @@ class SweepService:
             f"Starting sweep for {len(documents)} document(s)."
         )
 
-        #
-        # Vertiv
-        #
+        self.sweep_site(
+            site=self.vertiv,
+            site_name="Vertiv",
+            attribute="vertiv",
+            documents=documents
+        )
 
-        logger.info("Starting Vertiv sweep.")
+        self.sweep_site(
+            site=self.asset_library,
+            site_name="Asset Library",
+            attribute="asset_library",
+            documents=documents
+        )
 
-        self.vertiv.attach()
+        self.sweep_site(
+            site=self.pd_cloud,
+            site_name="PD Cloud",
+            attribute="pd_cloud",
+            documents=documents
+        )
 
-        for document in documents:
-
-            logger.info(
-                f"Vertiv: {document.control_number}"
-            )
-
-            self.execute_search(
-
-                site=self.vertiv,
-
-                document=document,
-
-                attribute="vertiv"
-
-            )
-
-        logger.info("Vertiv sweep complete.")
-
-        #
-        # Asset Library
-        #
-
-        logger.info("Starting Asset Library sweep.")
-
-        self.asset_library.attach()
-
-        for document in documents:
-
-            logger.info(
-                f"Asset Library: {document.control_number}"
-            )
-
-            self.execute_search(
-
-                site=self.asset_library,
-
-                document=document,
-
-                attribute="asset_library"
-
-            )
-
-        logger.info("Asset Library sweep complete.")
-
-        #
-        # PD Cloud
-        #
-
-        logger.info("Starting PD Cloud sweep.")
-
-        self.pd_cloud.attach()
-
-        for document in documents:
-
-            logger.info(
-                f"PD Cloud: {document.control_number}"
-            )
-
-            self.execute_search(
-
-                site=self.pd_cloud,
-
-                document=document,
-
-                attribute="pd_cloud"
-
-            )
-
-        logger.info("PD Cloud sweep complete.")
-
-        #
-        # MASW
-        #
-
-        logger.info("Starting MASW sweep.")
-
-        self.masw.attach()
-
-        for document in documents:
-
-            logger.info(
-                f"MASW: {document.control_number}"
-            )
-
-            self.execute_search(
-
-                site=self.masw,
-
-                document=document,
-
-                attribute="masw"
-
-            )
-
-        logger.info("MASW sweep complete.")
+        self.sweep_site(
+            site=self.masw,
+            site_name="MASW",
+            attribute="masw",
+            documents=documents
+        )
 
         logger.info("Sweep complete.")
 
-    def execute_search(
+    def sweep_site(
         self,
         site,
-        document,
-        attribute: str
+        site_name: str,
+        attribute: str,
+        documents
     ):
 
-        try:
+        logger.info(
+            f"Starting {site_name} sweep."
+        )
 
-            result = site.search(
+        site.attach()
+
+        total = len(documents)
+
+        found = 0
+        not_found = 0
+        errors = 0
+
+        for index, document in enumerate(
+            documents,
+            start=1
+        ):
+
+            self.log_progress(
+
+                site_name,
+
+                index,
+
+                total,
+
                 document.control_number
-            )
-
-            setattr(
-                document,
-                attribute,
-                result.message
-            )
-
-        except Exception as exception:
-
-            logger.exception(
-
-                f"{attribute.replace('_', ' ').title()} failed: "
-                f"{document.control_number} "
-                f"({self.get_error_reason(exception)})"
 
             )
 
-            setattr(
-                document,
-                attribute,
-                "ERROR"
-            )
+            try:
+
+                result = site.search(
+                    document.control_number
+                )
+
+                setattr(
+                    document,
+                    attribute,
+                    result.message
+                )
+
+                if result.found:
+
+                    found += 1
+
+                else:
+
+                    not_found += 1
+
+            except Exception as exception:
+
+                logger.exception(
+
+                    f"{site_name} failed: "
+                    f"{document.control_number} "
+                    f"({self.get_error_reason(exception)})"
+
+                )
+
+                setattr(
+                    document,
+                    attribute,
+                    ERROR
+                )
+
+                errors += 1
+
+        logger.info(
+            f"{site_name} sweep complete."
+        )
+
+        logger.info(
+            f"{site_name} Summary"
+        )
+
+        logger.info(
+            f"  Found     : {found}"
+        )
+
+        logger.info(
+            f"  Not Found : {not_found}"
+        )
+
+        logger.info(
+            f"  Errors    : {errors}"
+        )
+
+    def log_progress(
+        self,
+        site_name: str,
+        current: int,
+        total: int,
+        control_number: str
+    ):
+
+        logger.info(
+
+            f"{site_name} "
+            f"({current}/{total}): "
+            f"{control_number}"
+
+        )
 
     def get_error_reason(
         self,
