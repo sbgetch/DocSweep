@@ -1,9 +1,6 @@
 from openpyxl import load_workbook
 
-from config import (
-    CONTROL_NUMBER_COLUMN,
-    FIRST_DATA_ROW
-)
+from config import CONTROL_NUMBER_COLUMN, FIRST_DATA_ROW
 
 from models.document import Document
 
@@ -30,28 +27,17 @@ class ExcelReader:
 
         while True:
 
-            control_number = worksheet[
-                f"{CONTROL_NUMBER_COLUMN}{row}"
-            ].value
+            control_number = worksheet[f"{CONTROL_NUMBER_COLUMN}{row}"].value
 
             if not control_number:
                 break
 
             documents.append(
-
-                Document(
-
-                    row=row,
-
-                    control_number=str(control_number).strip()
-                )
-
+                Document(row=row, control_number=str(control_number).strip())
             )
 
             row += 1
 
-        logger.info(
-            f"{len(documents)} document(s) loaded."
-        )
+        logger.info(f"{len(documents)} document(s) loaded.")
 
         return documents

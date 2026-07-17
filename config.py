@@ -4,17 +4,9 @@ BASE_DIR = Path(__file__).resolve().parent
 
 BROWSER_DIR = BASE_DIR / "browser"
 
-CHROME_BINARY = (
-    BROWSER_DIR /
-    "chrome-win64" /
-    "chrome.exe"
-)
+CHROME_BINARY = BROWSER_DIR / "chrome-win64" / "chrome.exe"
 
-CHROMEDRIVER = (
-    BROWSER_DIR /
-    "chromedriver-win64" /
-    "chromedriver.exe"
-)
+CHROMEDRIVER = BROWSER_DIR / "chromedriver-win64" / "chromedriver.exe"
 
 TIMEOUT = 15
 
@@ -25,9 +17,7 @@ ASSET_LIBRARY_URL = "https://asset-library.vertiv.com/#/home?tabName=HOME"
 
 ORACLE_URL = "https://egup.fa.us2.oraclecloud.com/"
 
-MASW_URL = (
-    "https://amerplmpwiap01.int.vertivco.com/File_Display_MBD/faces/UserManualDisplay.xhtml"
-)
+MASW_URL = "https://amerplmpwiap01.int.vertivco.com/File_Display_MBD/faces/UserManualDisplay.xhtml"
 
 # EXCEL
 CONTROL_NUMBER_COLUMN = "A"

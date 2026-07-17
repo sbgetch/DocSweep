@@ -27,9 +27,7 @@ def main():
 
     reader = ExcelReader()
 
-    documents = reader.read(
-        "input/Sweep Tracker.xlsx"
-    )
+    documents = reader.read("input/Sweep Tracker.xlsx")
 
     service = SweepService(driver)
 
@@ -37,10 +35,7 @@ def main():
 
     writer = ExcelWriter()
 
-    writer.save(
-        "input/Sweep Tracker.xlsx",
-        documents
-    )
+    writer.save("input/Sweep Tracker.xlsx", documents)
 
     input("\nSweep complete. Press ENTER to exit...")
 

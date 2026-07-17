@@ -1,11 +1,6 @@
 from openpyxl import load_workbook
 
-from config import (
-    MASW_COLUMN,
-    VERTIV_COLUMN,
-    ASSET_LIBRARY_COLUMN,
-    PD_CLOUD_COLUMN
-)
+from config import MASW_COLUMN, VERTIV_COLUMN, ASSET_LIBRARY_COLUMN, PD_CLOUD_COLUMN
 
 from utils.logger import get_logger
 

@@ -4,6 +4,7 @@ from utils.exceptions import BrowserNotFoundError
 
 logger = get_logger(__name__)
 
+
 class BrowserManager:
 
     def __init__(self):
@@ -14,18 +15,10 @@ class BrowserManager:
         self.browser_dir = self.base_dir / "browser"
 
     def get_chrome_path(self):
-        return (
-            self.browser_dir /
-            "chrome-win64" /
-            "chrome.exe"
-        )
+        return self.browser_dir / "chrome-win64" / "chrome.exe"
 
     def get_driver_path(self):
-        return (
-            self.browser_dir /
-            "chromedriver-win64" /
-            "chromedriver.exe"
-        )
+        return self.browser_dir / "chromedriver-win64" / "chromedriver.exe"
 
     def validate(self):
 
