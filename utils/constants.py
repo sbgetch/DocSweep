@@ -1,3 +1,16 @@
 FOUND = "Check"
 
 NOT_FOUND = "NA"
+
+# Site Names
+SITE_VERTIV = "Vertiv"
+SITE_ASSET_LIBRARY = "Asset Library"
+SITE_PD_CLOUD = "PD Cloud"
+SITE_MASW = "MASW"
+
+SITES = (
+    SITE_VERTIV,
+    SITE_ASSET_LIBRARY,
+    SITE_PD_CLOUD,
+    SITE_MASW,
+)
