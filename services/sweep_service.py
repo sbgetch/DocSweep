@@ -42,11 +42,13 @@ class SweepService:
         driver,
         progress_callback=None,
         log_callback=None,
+        cancel_event=None,
     ):
 
         self.driver = driver
         self.progress_callback = progress_callback
         self.log_callback = log_callback
+        self.cancel_event = cancel_event
 
         self.sites: tuple[SiteConfig, ...] = (
             SiteConfig(
@@ -93,12 +95,18 @@ class SweepService:
 
         for config in self.sites:
 
-            self.sweep_site(
+            completed = self.sweep_site(
                 site=config.site,
                 site_name=config.name,
                 result_attribute=config.result_attribute,
                 documents=documents,
             )
+
+            if not completed:
+
+                self.log("Sweep cancelled by user.")
+
+                return False
 
         elapsed_seconds = round(time.perf_counter() - overall_start)
 
@@ -109,6 +117,8 @@ class SweepService:
         self.log(f"Overall elapsed: {overall_elapsed}")
 
         self.log("Sweep complete.")
+
+        return True
 
     def sweep_site(
         self,
@@ -136,6 +146,12 @@ class SweepService:
         errors = 0
 
         for index, document in enumerate(documents, start=1):
+
+            if self.cancel_event.is_set():
+
+                self.log(f"{site_name} sweep cancelled.")
+
+                return False
 
             self.log_progress(
                 site_name,
@@ -212,6 +228,8 @@ class SweepService:
             elapsed=str(elapsed),
         )
 
+        return True
+
     def log_progress(
         self,
         site_name: str,
@@ -264,9 +282,6 @@ class SweepService:
             StaleElementReferenceException,
         ) as exception:
 
-            self.log(
-                f"Retrying {control_number} "
-                f"({type(exception).__name__})"
-            )
+            self.log(f"Retrying {control_number} " f"({type(exception).__name__})")
 
             return site.search(control_number)

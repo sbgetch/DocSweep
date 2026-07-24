@@ -15,6 +15,8 @@ from utils.events import (
     EVENT_SITE_COMPLETE,
     EVENT_SITE_START,
     EVENT_STAGE,
+    EVENT_SWEEP_COMPLETE,
+    EVENT_SWEEP_CANCELLED,
 )
 
 logger = get_logger(__name__)
@@ -33,7 +35,18 @@ class MainWindow:
 
     def __init__(self):
 
+        self.cancel_event = threading.Event()
+
+        self.sweep_running = False
+
+        self.exit_after_cancel = False
+
         self.root = tk.Tk()
+
+        self.root.protocol(
+            "WM_DELETE_WINDOW",
+            self.on_close,
+        )
 
         Theme.configure(self.root)
 
@@ -354,6 +367,18 @@ class MainWindow:
             column=1,
             sticky="ew",
             padx=(5, 0),
+        )
+
+        self.cancel_button = self.create_button(
+            button_frame,
+            text="Cancel Sweep",
+            command=self.cancel_sweep,
+            state="disabled",
+        )
+
+        self.cancel_button.pack(
+            side="left",
+            padx=(10, 0),
         )
 
     def build_connected_sites_card(self, parent):
@@ -815,6 +840,10 @@ class MainWindow:
 
         self.disable_controls()
 
+        self.sweep_running = True
+
+        self.cancel_event.clear()
+
         threading.Thread(
             target=self.run_sweep,
             daemon=True,
@@ -828,6 +857,7 @@ class MainWindow:
                 self.browser_service.driver,
                 progress_callback=self.progress_callback,
                 log_callback=self.log_callback,
+                cancel_event=self.cancel_event,
             )
 
             runner.run(
@@ -845,6 +875,47 @@ class MainWindow:
                 0,
                 lambda: self.sweep_failed(error),
             )
+
+    def cancel_sweep(self, exit_after_cancel=False):
+
+        if self.cancel_event.is_set():
+
+            return
+
+        confirmed = messagebox.askyesno(
+            "Cancel Sweep",
+            (
+                "Are you sure you want to cancel the current sweep?\n\n"
+                "The current document will finish processing.\n"
+                "Partial results will be saved."
+            ),
+        )
+
+        if not confirmed:
+
+            return
+
+        self.exit_after_cancel = exit_after_cancel
+
+        self.cancel_event.set()
+
+        self.cancel_button.config(state="disabled")
+
+        self.set_status("Cancelling...")
+
+        self.append_log("Cancellation requested by user...")
+
+    def on_close(self):
+
+        if not self.sweep_running:
+
+            self.root.destroy()
+
+            return
+
+        self.cancel_sweep(
+            exit_after_cancel=True,
+        )
 
     def log_callback(self, message: str):
 
@@ -868,9 +939,6 @@ class MainWindow:
         if event_type == EVENT_STAGE:
 
             self.set_status(event["status"])
-
-            if event["status"] == "Completed":
-                self.sweep_completed(event["output_file"])
 
             return
 
@@ -900,9 +968,13 @@ class MainWindow:
 
         if event_type == EVENT_PROGRESS:
 
-            self.progress.set(f'{event["current"]} / {event["total"]}')
+            self.progress.set(
+                f'{event["current"]} / {event["total"]}'
+            )
 
-            self.current.set(event["control_number"])
+            self.current.set(
+                event["control_number"]
+            )
 
             self.progress_bar["maximum"] = event["total"]
 
@@ -919,6 +991,24 @@ class MainWindow:
                 errors=event["errors"],
                 elapsed=event["elapsed"],
             )
+
+            return
+
+        if event_type == EVENT_SWEEP_COMPLETE:
+
+            self.sweep_completed(
+                event["output_file"],
+            )
+
+            return
+
+        if event_type == EVENT_SWEEP_CANCELLED:
+
+            self.sweep_cancelled(
+                event["output_file"],
+            )
+
+            return
 
     def append_summary(
         self,
@@ -963,6 +1053,8 @@ class MainWindow:
 
         self.start_button.config(state="disabled")
 
+        self.cancel_button.config(state="normal")
+
         self.browse_excel_button.config(state="disabled")
 
         self.browse_output_button.config(state="disabled")
@@ -975,11 +1067,17 @@ class MainWindow:
 
         self.start_button.config(state="normal")
 
+        self.cancel_button.config(state="normal")
+
         self.browse_excel_button.config(state="normal")
 
         self.browse_output_button.config(state="normal")
 
     def sweep_completed(self, output_file):
+
+        self.sweep_running = False
+
+        self.exit_after_cancel = False
 
         self.stop_timer()
 
@@ -992,7 +1090,34 @@ class MainWindow:
             f"Output saved to:\n\n{output_file}",
         )
 
+    def sweep_cancelled(self, output_file):
+
+        self.sweep_running = False
+
+        self.exit_after_cancel = False
+
+        self.stop_timer()
+
+        self.enable_controls()
+
+        self.set_status("Cancelled")
+
+        messagebox.showinfo(
+            "Sweep Cancelled",
+            "The sweep was cancelled.\n\n"
+            "Partial results were saved to:\n\n"
+            f"{output_file}",
+        )
+
+        if self.exit_after_cancel:
+
+            self.root.destroy()
+
     def sweep_failed(self, message):
+
+        self.sweep_running = False
+
+        self.exit_after_cancel = False
 
         self.stop_timer()
 
@@ -1019,6 +1144,12 @@ class MainWindow:
         self.log_text.see("end")
 
         self.log_text.configure(state="disabled")
+
+    def finish_sweep(self):
+
+        self.stop_timer()
+
+        self.enable_controls()
 
     # =========================================================================
     # UI Helpers
