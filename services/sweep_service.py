@@ -37,9 +37,16 @@ ERROR = "ERROR"
 
 class SweepService:
 
-    def __init__(self, driver, progress_callback=None):
+    def __init__(
+        self,
+        driver,
+        progress_callback=None,
+        log_callback=None,
+    ):
 
+        self.driver = driver
         self.progress_callback = progress_callback
+        self.log_callback = log_callback
 
         self.sites: tuple[SiteConfig, ...] = (
             SiteConfig(
@@ -70,11 +77,19 @@ class SweepService:
 
             self.progress_callback(**kwargs)
 
+    def log(self, message: str):
+
+        logger.info(message)
+
+        if self.log_callback:
+
+            self.log_callback(message)
+
     def sweep(self, documents):
 
         overall_start = time.perf_counter()
 
-        logger.info(f"Starting sweep for {len(documents)} document(s).")
+        self.log(f"Starting sweep for {len(documents)} document(s).")
 
         for config in self.sites:
 
@@ -91,9 +106,9 @@ class SweepService:
             seconds=elapsed_seconds,
         )
 
-        logger.info(f"Overall elapsed: {overall_elapsed}")
+        self.log(f"Overall elapsed: {overall_elapsed}")
 
-        logger.info("Sweep complete.")
+        self.log("Sweep complete.")
 
     def sweep_site(
         self,
@@ -103,7 +118,7 @@ class SweepService:
         documents,
     ):
 
-        logger.info(f"Starting {site_name} sweep.")
+        self.log(f"Starting {site_name} sweep.")
 
         self.report_progress(
             event=EVENT_SITE_START,
@@ -160,11 +175,15 @@ class SweepService:
 
             except Exception as exception:
 
-                logger.exception(
+                message = (
                     f"{site_name} failed: "
                     f"{document.control_number} "
                     f"({self.get_error_reason(exception)})"
                 )
+
+                logger.exception(message)
+
+                self.log(message)
 
                 setattr(
                     document,
@@ -176,13 +195,13 @@ class SweepService:
 
         elapsed = timedelta(seconds=round(time.perf_counter() - start_time))
 
-        logger.info(f"{site_name} sweep complete.")
+        self.log(f"{site_name} sweep complete.")
 
-        logger.info(f"{site_name} Summary")
-        logger.info(f"  Found     : {found}")
-        logger.info(f"  Not Found : {not_found}")
-        logger.info(f"  Errors    : {errors}")
-        logger.info(f"  Elapsed   : {elapsed}")
+        self.log(f"{site_name} Summary")
+        self.log(f"  Found     : {found}")
+        self.log(f"  Not Found : {not_found}")
+        self.log(f"  Errors    : {errors}")
+        self.log(f"  Elapsed   : {elapsed}")
 
         self.report_progress(
             event=EVENT_SITE_COMPLETE,
@@ -201,7 +220,7 @@ class SweepService:
         control_number: str,
     ):
 
-        logger.info(f"{site_name} ({current}/{total}): {control_number}")
+        self.log(f"{site_name} ({current}/{total}): {control_number}")
 
     def get_error_reason(
         self,
@@ -243,8 +262,11 @@ class SweepService:
         except (
             TimeoutException,
             StaleElementReferenceException,
-        ):
+        ) as exception:
 
-            logger.warning(f"Retrying search for {control_number}")
+            self.log(
+                f"Retrying {control_number} "
+                f"({type(exception).__name__})"
+            )
 
             return site.search(control_number)

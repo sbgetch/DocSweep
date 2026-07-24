@@ -6,14 +6,23 @@ from excel.writer import ExcelWriter
 from services.sweep_service import SweepService
 
 from utils.events import EVENT_STAGE
+from utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class SweepRunner:
 
-    def __init__(self, driver, progress_callback=None):
+    def __init__(
+        self,
+        driver,
+        progress_callback=None,
+        log_callback=None,
+    ):
 
         self.driver = driver
         self.progress_callback = progress_callback
+        self.log_callback = log_callback
 
     def report_progress(self, **kwargs):
 
@@ -32,6 +41,8 @@ class SweepRunner:
 
         documents = reader.read(input_file)
 
+        self.log(f"Loaded {len(documents)} document(s).")
+
         self.report_progress(
             event=EVENT_STAGE,
             status="Searching documents...",
@@ -40,6 +51,7 @@ class SweepRunner:
         sweep = SweepService(
             self.driver,
             progress_callback=self.progress_callback,
+            log_callback=self.log_callback,
         )
 
         sweep.sweep(documents)
@@ -58,6 +70,8 @@ class SweepRunner:
             documents,
         )
 
+        self.log(f"Workbook saved: {output_file}")
+
         self.report_progress(
             event=EVENT_STAGE,
             status="Completed",
@@ -65,3 +79,11 @@ class SweepRunner:
         )
 
         return output_file
+
+    def log(self, message: str):
+
+        logger.info(message)
+
+        if self.log_callback:
+
+            self.log_callback(message)

@@ -1,8 +1,9 @@
 import time
+import threading
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
-import threading
+from gui.theme import Theme
 
 from services.sweep_runner import SweepRunner
 from services.browser_service import BrowserService
@@ -19,12 +20,22 @@ from utils.events import (
 logger = get_logger(__name__)
 
 from version import __version__
+
+
 class MainWindow:
 
     WINDOW_WIDTH = 850
     WINDOW_HEIGHT = 750
 
+    # =========================================================================
+    # Initialization
+    # =========================================================================
+
     def __init__(self):
+
+        self.root = tk.Tk()
+
+        Theme.configure(self.root)
 
         self.browser_service = BrowserService()
 
@@ -58,116 +69,183 @@ class MainWindow:
 
         self.root.mainloop()
 
+    # =============================================================================
+    # UI BUILDERS
+    # =============================================================================
+
     def build_ui(self):
 
-        container = ttk.Frame(self.root, padding=15)
-
-        container.pack(fill="both", expand=True)
-
-        self.build_preparation_frame(container)
-
-        self.build_site_status_frame(container)
-
-        self.build_input_frame(container)
-
-        self.build_progress_frame(container)
-
-        self.build_summary_frame(container)
-
-        self.build_buttons(container)
-
-    def build_preparation_frame(self, parent):
-
-        frame = ttk.LabelFrame(parent, text="Preparation", padding=10)
-
-        frame.pack(fill="x", pady=(0, 10))
-
-        self.launch_button = ttk.Button(
-            frame, text="Launch Browser", command=self.launch_browser
+        container = ttk.Frame(
+            self.root,
+            padding=15,
         )
 
-        self.launch_button.grid(row=0, column=0, padx=(0, 10))
-
-        self.verify_button = ttk.Button(
-            frame, text="Verify Sites", command=self.verify_sites, state="disabled"
+        container.pack(
+            fill="both",
+            expand=True,
         )
 
-        self.verify_button.grid(row=0, column=1)
+        self.build_header(container)
 
-    def build_site_status_frame(self, parent):
+        self.build_upper_section(container)
 
-        frame = ttk.LabelFrame(
-            parent,
-            text="Site Status",
-            padding=10,
+        self.build_middle_section(container)
+
+        self.build_lower_section(container)
+
+        self.build_footer(container)
+
+    def build_header(self, parent):
+
+        frame = ttk.Frame(parent)
+
+        frame.pack(
+            fill="x",
+            pady=(0, 15),
         )
+
+        frame.columnconfigure(0, weight=1)
+
+        title_frame = ttk.Frame(frame)
+        title_frame.grid(
+            row=0,
+            column=0,
+            sticky="w",
+        )
+
+        self.create_label(
+            title_frame,
+            text="DocSweep",
+            style="Header.TLabel",
+        ).pack(anchor="w")
+
+        self.create_label(
+            title_frame,
+            text="Search multiple documentation repositories automatically.",
+            style="Subtitle.TLabel",
+        ).pack(anchor="w", pady=(2, 0))
+
+        version_frame = ttk.Frame(frame)
+
+        version_frame.grid(
+            row=0,
+            column=1,
+            sticky="e",
+        )
+
+        self.create_label(
+            version_frame,
+            text=f"v{__version__}",
+            style="Subtitle.TLabel",
+        ).pack(anchor="e")
+
+    def build_upper_section(self, parent):
+
+        frame = ttk.Frame(parent)
 
         frame.pack(
             fill="x",
             pady=(0, 10),
         )
 
-        self.site_table = ttk.Treeview(
-            frame,
-            columns=("site", "status"),
-            show="headings",
-            height=len(SITES),
+        frame.columnconfigure(0, weight=1)
+        frame.columnconfigure(1, weight=1)
+
+        self.build_configuration_card(frame)
+
+        self.build_connected_sites_card(frame)
+
+    def build_middle_section(self, parent):
+
+        frame = ttk.Frame(parent)
+
+        frame.pack(
+            fill="both",
+            expand=True,
+            pady=(0, 10),
         )
 
-        self.site_table.heading(
-            "site",
-            text="Site",
+        frame.columnconfigure(0, weight=1)
+        frame.columnconfigure(1, weight=1)
+
+        self.build_progress_card(frame)
+
+        self.build_logs_card(frame)
+
+    def build_lower_section(self, parent):
+
+        self.build_summary_card(parent)
+
+    def build_footer(self, parent):
+
+        separator = ttk.Separator(
+            parent,
+            orient="horizontal",
         )
 
-        self.site_table.heading(
-            "status",
-            text="Status",
-        )
-
-        self.site_table.column(
-            "site",
-            width=220,
-            anchor="w",
-        )
-
-        self.site_table.column(
-            "status",
-            width=500,
-            anchor="w",
-        )
-
-        self.site_table.pack(
+        separator.pack(
             fill="x",
+            pady=(5, 8),
         )
 
-        for site in SITES:
+        frame = ttk.Frame(parent)
 
-            self.site_table.insert(
-                "",
-                "end",
-                values=(
-                    site,
-                    "Not Checked",
-                ),
-            )
+        frame.pack(fill="x")
 
-    def build_input_frame(self, parent):
+        self.footer_status = tk.StringVar(value="Ready")
 
-        frame = ttk.LabelFrame(parent, text="Input / Output", padding=10)
+        self.create_label(
+            frame,
+            textvariable=self.footer_status,
+        ).pack(
+            side="left",
+        )
 
-        frame.pack(fill="x", pady=(0, 10))
+        self.footer_time = tk.StringVar()
+
+        self.create_label(
+            frame,
+            textvariable=self.footer_time,
+        ).pack(
+            side="right",
+        )
+
+        self.update_clock()
+
+    # =============================================================================
+    # UI BUILDERS - WRAPPERS
+    # =============================================================================
+
+    def build_configuration_card(self, parent):
+
+        frame = self.create_labelFrame(
+            parent,
+            text="Configuration",
+            padding=10,
+            style="Card.TLabelframe",
+        )
+
+        frame.grid(
+            row=0,
+            column=0,
+            sticky="nsew",
+            padx=(0, 5),
+        )
 
         frame.columnconfigure(1, weight=1)
 
         # Excel File
 
-        ttk.Label(frame, text="Excel File").grid(
+        self.create_label(
+            frame,
+            text="Excel File",
+        ).grid(
             row=0,
             column=0,
             sticky="w",
         )
 
-        ttk.Entry(
+        self.create_entry(
             frame,
             textvariable=self.excel_path,
         ).grid(
@@ -177,10 +255,11 @@ class MainWindow:
             padx=5,
         )
 
-        self.browse_excel_button = ttk.Button(
+        self.browse_excel_button = self.create_button(
             frame,
             text="Browse",
             command=self.browse_excel,
+            style="Secondary.TButton",
         )
 
         self.browse_excel_button.grid(
@@ -190,14 +269,17 @@ class MainWindow:
 
         # Output Folder
 
-        ttk.Label(frame, text="Output Folder").grid(
+        self.create_label(
+            frame,
+            text="Output Folder",
+        ).grid(
             row=1,
             column=0,
             sticky="w",
             pady=(10, 0),
         )
 
-        ttk.Entry(
+        self.create_entry(
             frame,
             textvariable=self.output_folder,
         ).grid(
@@ -208,10 +290,11 @@ class MainWindow:
             pady=(10, 0),
         )
 
-        self.browse_output_button = ttk.Button(
+        self.browse_output_button = self.create_button(
             frame,
             text="Browse",
             command=self.browse_output,
+            style="Secondary.TButton",
         )
 
         self.browse_output_button.grid(
@@ -220,96 +303,152 @@ class MainWindow:
             pady=(10, 0),
         )
 
-    def build_progress_frame(self, parent):
+        ttk.Separator(
+            frame,
+            orient="horizontal",
+        ).grid(
+            row=2,
+            column=0,
+            columnspan=3,
+            sticky="ew",
+            pady=15,
+        )
 
-        frame = ttk.LabelFrame(
+        button_frame = ttk.Frame(frame)
+
+        button_frame.grid(
+            row=3,
+            column=0,
+            columnspan=3,
+            sticky="ew",
+        )
+
+        button_frame.columnconfigure(0, weight=1)
+        button_frame.columnconfigure(1, weight=1)
+
+        self.verify_button = self.create_button(
+            button_frame,
+            text="Verify Sites",
+            command=self.verify_sites,
+            state="disabled",
+            style="Secondary.TButton",
+        )
+
+        self.verify_button.grid(
+            row=0,
+            column=0,
+            sticky="ew",
+            padx=(0, 5),
+        )
+
+        self.start_button = self.create_button(
+            button_frame,
+            text="Start Sweep",
+            command=self.start_sweep,
+            state="disabled",
+            style="Primary.TButton",
+        )
+
+        self.start_button.grid(
+            row=0,
+            column=1,
+            sticky="ew",
+            padx=(5, 0),
+        )
+
+    def build_connected_sites_card(self, parent):
+
+        frame = self.create_labelFrame(
             parent,
-            text="Progress",
+            text="Connected Sites",
             padding=10,
+            style="Card.TLabelframe",
         )
 
-        frame.pack(
-            fill="x",
-            pady=(0, 10),
-        )
-
-        ttk.Label(
-            frame,
-            text="Status:",
-        ).grid(
-            row=0,
-            column=0,
-            sticky="w",
-        )
-
-        ttk.Label(
-            frame,
-            textvariable=self.status,
-        ).grid(
+        frame.grid(
             row=0,
             column=1,
-            sticky="w",
+            sticky="nsew",
+            padx=(5, 0),
         )
 
-        ttk.Label(
-            frame,
-            text="Progress:",
-        ).grid(
-            row=1,
+        frame.columnconfigure(1, weight=1)
+
+        self.site_status_labels = {}
+
+        for row, site in enumerate(SITES):
+
+            self.create_label(
+                frame,
+                text=site,
+            ).grid(
+                row=row,
+                column=0,
+                sticky="w",
+                pady=6,
+            )
+
+            status = self.create_label(
+                frame,
+                text="● Not Checked",
+            )
+
+            status.grid(
+                row=row,
+                column=1,
+                sticky="e",
+                pady=6,
+            )
+
+            self.site_status_labels[site] = status
+
+    def build_progress_card(self, parent):
+
+        frame = self.create_labelFrame(
+            parent,
+            text="Sweep Progress",
+            padding=10,
+            style="Card.TLabelframe",
+        )
+
+        frame.grid(
+            row=0,
             column=0,
-            sticky="w",
-            pady=(8, 0),
+            sticky="nsew",
+            padx=(0, 5),
         )
 
-        ttk.Label(
-            frame,
-            textvariable=self.progress,
-        ).grid(
-            row=1,
-            column=1,
-            sticky="w",
-            pady=(8, 0),
+        frame.columnconfigure(1, weight=1)
+
+        labels = (
+            ("Status", self.status),
+            ("Progress", self.progress),
+            ("Control Number", self.current),
+            ("Elapsed", self.elapsed),
         )
 
-        ttk.Label(
-            frame,
-            text="Current:",
-        ).grid(
-            row=2,
-            column=0,
-            sticky="w",
-            pady=(8, 0),
-        )
+        for row, (title, variable) in enumerate(labels):
 
-        ttk.Label(
-            frame,
-            textvariable=self.current,
-        ).grid(
-            row=2,
-            column=1,
-            sticky="w",
-            pady=(8, 0),
-        )
+            self.create_label(
+                frame,
+                text=f"{title}:",
+            ).grid(
+                row=row,
+                column=0,
+                sticky="w",
+                pady=5,
+            )
 
-        ttk.Label(
-            frame,
-            text="Elapsed:",
-        ).grid(
-            row=3,
-            column=0,
-            sticky="w",
-            pady=(8, 0),
-        )
-
-        ttk.Label(
-            frame,
-            textvariable=self.elapsed,
-        ).grid(
-            row=3,
-            column=1,
-            sticky="w",
-            pady=(8, 0),
-        )
+            self.create_label(
+                frame,
+                textvariable=variable,
+            ).grid(
+                row=row,
+                column=1,
+                sticky="w",
+                padx=(10, 0),
+                pady=5,
+            )
 
         self.progress_bar = ttk.Progressbar(
             frame,
@@ -317,24 +456,64 @@ class MainWindow:
         )
 
         self.progress_bar.grid(
-            row=4,
+            row=len(labels),
             column=0,
             columnspan=2,
             sticky="ew",
-            pady=(15, 0),
+            pady=(20, 0),
         )
 
-        frame.columnconfigure(
-            1,
-            weight=1,
+    def build_logs_card(self, parent):
+
+        frame = self.create_labelFrame(
+            parent,
+            text="Logs",
+            padding=10,
+            style="Card.TLabelframe",
         )
 
-    def build_summary_frame(self, parent):
+        frame.grid(
+            row=0,
+            column=1,
+            sticky="nsew",
+            padx=(5, 0),
+        )
 
-        frame = ttk.LabelFrame(
+        self.log_text = tk.Text(
+            frame,
+            height=10,
+            state="disabled",
+            wrap="word",
+        )
+
+        scrollbar = ttk.Scrollbar(
+            frame,
+            orient="vertical",
+            command=self.log_text.yview,
+        )
+
+        self.log_text.configure(
+            yscrollcommand=scrollbar.set,
+        )
+
+        self.log_text.pack(
+            side="left",
+            fill="both",
+            expand=True,
+        )
+
+        scrollbar.pack(
+            side="right",
+            fill="y",
+        )
+
+    def build_summary_card(self, parent):
+
+        frame = self.create_labelFrame(
             parent,
             text="Summary",
             padding=10,
+            style="Card.TLabelframe",
         )
 
         frame.pack(
@@ -349,26 +528,45 @@ class MainWindow:
             "not_found",
             "errors",
             "elapsed",
+            "status",
         )
 
         self.summary_table = ttk.Treeview(
             frame,
             columns=columns,
             show="headings",
-            height=len(SITES),
         )
 
-        self.summary_table.heading("site", text="Site")
-        self.summary_table.heading("found", text="Found")
-        self.summary_table.heading("not_found", text="Not Found")
-        self.summary_table.heading("errors", text="Errors")
-        self.summary_table.heading("elapsed", text="Elapsed")
+        headings = {
+            "site": "Site",
+            "found": "Found",
+            "not_found": "Not Found",
+            "errors": "Errors",
+            "elapsed": "Elapsed",
+            "status": "Status",
+        }
 
-        self.summary_table.column("site", width=220, anchor="w")
-        self.summary_table.column("found", width=80, anchor="center")
-        self.summary_table.column("not_found", width=90, anchor="center")
-        self.summary_table.column("errors", width=80, anchor="center")
-        self.summary_table.column("elapsed", width=120, anchor="center")
+        widths = {
+            "site": 220,
+            "found": 70,
+            "not_found": 90,
+            "errors": 70,
+            "elapsed": 110,
+            "status": 120,
+        }
+
+        for column in columns:
+
+            self.summary_table.heading(
+                column,
+                text=headings[column],
+            )
+
+            self.summary_table.column(
+                column,
+                width=widths[column],
+                anchor="center" if column != "site" else "w",
+            )
 
         scrollbar = ttk.Scrollbar(
             frame,
@@ -403,23 +601,98 @@ class MainWindow:
                     "-",
                     "-",
                     "-",
+                    "-",
                     "Pending",
                 ),
             )
 
             self.summary_rows[site] = item
 
-    def build_buttons(self, parent):
+    # =========================================================================
+    # Widget Factory
+    # =========================================================================
 
-        frame = ttk.Frame(parent)
+    def create_label(
+        self,
+        parent,
+        text=None,
+        textvariable=None,
+        row=0,
+        column=0,
+        **kwargs,
+    ):
 
-        frame.pack(fill="x")
-
-        self.start_button = ttk.Button(
-            frame, text="Start Sweep", command=self.start_sweep, state="disabled"
+        label = ttk.Label(
+            parent,
+            text=text,
+            textvariable=textvariable,
+            **kwargs,
         )
 
-        self.start_button.pack(side="right")
+        label.grid(
+            row=row,
+            column=column,
+            sticky="w",
+            padx=5,
+            pady=5,
+        )
+
+        return label
+
+    def create_entry(
+        self,
+        parent,
+        variable,
+        row,
+    ):
+
+        entry = ttk.Entry(
+            parent,
+            textvariable=variable,
+        )
+
+        entry.grid(
+            row=row,
+            column=1,
+            sticky="ew",
+            padx=5,
+            pady=5,
+        )
+
+        return entry
+
+    def create_button(
+        self,
+        parent,
+        text,
+        command,
+        row,
+        column,
+        style="Secondary.TButton",
+        **kwargs,
+    ):
+
+        button = ttk.Button(
+            parent,
+            text=text,
+            command=command,
+            style=style,
+            **kwargs,
+        )
+
+        button.grid(
+            row=row,
+            column=column,
+            padx=5,
+            pady=5,
+            sticky="ew",
+        )
+
+        return button
+
+    # =========================================================================
+    # User Actions
+    # =========================================================================
 
     def browse_excel(self):
 
@@ -443,13 +716,13 @@ class MainWindow:
 
         try:
 
-            self.status.set("Launching Chrome for Testing...")
+            self.set_status("Launching Chrome for Testing...")
 
             self.root.update_idletasks()
 
             self.browser_service.launch()
 
-            self.status.set("Browser ready. Please log in to each site.")
+            self.set_status("Browser ready. Please log in to each site.")
 
             self.verify_button.config(state="normal")
 
@@ -466,11 +739,9 @@ class MainWindow:
 
             messagebox.showerror("Error", str(ex))
 
-            self.status.set("Idle")
+            self.set_status("Idle")
 
     def verify_sites(self):
-
-        self.site_table.delete(*self.site_table.get_children())
 
         results = self.browser_service.verify_sites()
 
@@ -478,21 +749,24 @@ class MainWindow:
 
         for site, status in results:
 
-            self.site_table.insert("", "end", values=(site, status))
+            label = self.site_status_labels[site]
+
+            label.config(
+                text=f"● {status}",
+            )
 
             if status != "Ready":
-
                 all_ready = False
 
         if all_ready:
 
-            self.status.set("All sites are ready.")
+            self.set_status("All sites are ready.")
 
             self.start_button.config(state="normal")
 
         else:
 
-            self.status.set("One or more sites are not ready.")
+            self.set_status("One or more sites are not ready.")
 
             self.start_button.config(state="disabled")
 
@@ -517,7 +791,6 @@ class MainWindow:
             return
 
         for site, item in self.summary_rows.items():
-
             self.summary_table.item(
                 item,
                 values=(
@@ -525,18 +798,18 @@ class MainWindow:
                     "-",
                     "-",
                     "-",
+                    "-",
                     "Pending",
                 ),
             )
 
-        self.status.set("Starting...")
-        self.progress.set("0 / 0")
-        self.current.set("-")
+        self.clear_summary()
 
-        self.progress_bar["value"] = 0
-        self.progress_bar["maximum"] = 1
+        self.set_status("Starting...")
 
-        self.elapsed.set("00:00:00")
+        self.reset_progress()
+
+        self.clear_logs()
 
         self.start_timer()
 
@@ -554,6 +827,7 @@ class MainWindow:
             runner = SweepRunner(
                 self.browser_service.driver,
                 progress_callback=self.progress_callback,
+                log_callback=self.log_callback,
             )
 
             runner.run(
@@ -572,6 +846,17 @@ class MainWindow:
                 lambda: self.sweep_failed(error),
             )
 
+    def log_callback(self, message: str):
+
+        self.root.after(
+            0,
+            lambda: self.append_log(message),
+        )
+
+    # =========================================================================
+    # Progress Events
+    # =========================================================================
+
     def progress_callback(self, **kwargs):
 
         self.root.after(0, lambda: self.update_progress(kwargs))
@@ -582,7 +867,7 @@ class MainWindow:
 
         if event_type == EVENT_STAGE:
 
-            self.status.set(event["status"])
+            self.set_status(event["status"])
 
             if event["status"] == "Completed":
                 self.sweep_completed(event["output_file"])
@@ -593,7 +878,7 @@ class MainWindow:
 
             site = event["site"]
 
-            self.status.set(f"Searching {site}...")
+            self.set_status(f"Searching {site}...")
 
             item = self.summary_rows.get(site)
 
@@ -606,7 +891,8 @@ class MainWindow:
                         "-",
                         "-",
                         "-",
-                        "Running...",
+                        "-",
+                        "Running",
                     ),
                 )
 
@@ -648,6 +934,11 @@ class MainWindow:
         if item is None:
             return
 
+        status = "Completed"
+
+        if errors > 0:
+            status = "Completed with Errors"
+
         self.summary_table.item(
             item,
             values=(
@@ -656,8 +947,13 @@ class MainWindow:
                 not_found,
                 errors,
                 elapsed,
+                status,
             ),
         )
+
+    # =========================================================================
+    # UI State
+    # =========================================================================
 
     def disable_controls(self):
 
@@ -689,7 +985,7 @@ class MainWindow:
 
         self.enable_controls()
 
-        self.status.set("Completed")
+        self.set_status("Completed")
 
         messagebox.showinfo(
             "Sweep Complete",
@@ -702,12 +998,81 @@ class MainWindow:
 
         self.enable_controls()
 
-        self.status.set("Failed")
+        self.set_status("Failed")
 
         messagebox.showerror(
             "Sweep Failed",
             message,
         )
+
+    def append_log(self, message):
+
+        timestamp = time.strftime("%H:%M:%S")
+
+        self.log_text.configure(state="normal")
+
+        self.log_text.insert(
+            "end",
+            f"[{timestamp}] {message}\n",
+        )
+
+        self.log_text.see("end")
+
+        self.log_text.configure(state="disabled")
+
+    # =========================================================================
+    # UI Helpers
+    # =========================================================================
+
+    def set_status(self, status: str):
+
+        self.status.set(status)
+
+        if hasattr(self, "footer_status"):
+            self.footer_status.set(status)
+
+        if hasattr(self, "log_text"):
+            self.append_log(status)
+
+    def reset_progress(self):
+
+        self.progress.set("0 / 0")
+
+        self.current.set("-")
+
+        self.progress_bar["maximum"] = 1
+
+        self.progress_bar["value"] = 0
+
+        self.elapsed.set("00:00:00")
+
+    def clear_summary(self):
+
+        for site, item in self.summary_rows.items():
+
+            self.summary_table.item(
+                item,
+                values=(
+                    site,
+                    "-",
+                    "-",
+                    "-",
+                    "-",
+                    "Pending",
+                ),
+            )
+
+    def clear_logs(self):
+
+        self.log_text.configure(state="normal")
+
+        self.log_text.delete("1.0", tk.END)
+
+        self.log_text.configure(state="disabled")
+
+    # =========================================================================
+    # Timer
+    # =========================================================================
 
     def start_timer(self):
 
@@ -735,4 +1100,15 @@ class MainWindow:
         self.root.after(
             1000,
             self.update_timer,
+        )
+
+    def update_clock(self):
+
+        current_time = time.strftime("%I:%M:%S %p")
+
+        self.footer_time.set(current_time)
+
+        self.root.after(
+            1000,
+            self.update_clock,
         )
