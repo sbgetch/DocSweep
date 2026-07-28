@@ -26,6 +26,7 @@ from utils.constants import (
 from utils.logger import get_logger
 from utils.events import (
     EVENT_PROGRESS,
+    EVENT_SITE_PROGRESS,
     EVENT_SITE_COMPLETE,
     EVENT_SITE_START,
 )
@@ -189,6 +190,14 @@ class SweepService:
 
                     not_found += 1
 
+                self.report_progress(
+                    event=EVENT_SITE_PROGRESS,
+                    site=site_name,
+                    found=found,
+                    not_found=not_found,
+                    errors=errors,
+                )
+
             except Exception as exception:
 
                 message = (
@@ -208,6 +217,14 @@ class SweepService:
                 )
 
                 errors += 1
+
+                self.report_progress(
+                    event=EVENT_SITE_PROGRESS,
+                    site=site_name,
+                    found=found,
+                    not_found=not_found,
+                    errors=errors,
+                )
 
         elapsed = timedelta(seconds=round(time.perf_counter() - start_time))
 

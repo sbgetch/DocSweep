@@ -9,9 +9,18 @@ from services.sweep_runner import SweepRunner
 from services.browser_service import BrowserService
 
 from utils.logger import get_logger
-from utils.constants import SITES
+from utils.constants import (
+    SITES,
+    SITE_STATUS_NOT_CHECKED,
+    SITE_STATUS_VERIFYING,
+    SITE_STATUS_READY,
+    SITE_STATUS_RUNNING,
+    SITE_STATUS_COMPLETED,
+    SITE_STATUS_ERROR,
+)
 from utils.events import (
     EVENT_PROGRESS,
+    EVENT_SITE_PROGRESS,
     EVENT_SITE_COMPLETE,
     EVENT_SITE_START,
     EVENT_STAGE,
@@ -43,6 +52,8 @@ class MainWindow:
 
         self.root = tk.Tk()
 
+        self.root.title(f"DocSweep v{__version__}")
+
         self.root.protocol(
             "WM_DELETE_WINDOW",
             self.on_close,
@@ -51,10 +62,6 @@ class MainWindow:
         Theme.configure(self.root)
 
         self.browser_service = BrowserService()
-
-        self.root = tk.Tk()
-
-        self.root.title(f"DocSweep v{__version__}")
 
         self.root.geometry(f"{self.WINDOW_WIDTH}x{self.WINDOW_HEIGHT}")
 
@@ -339,6 +346,10 @@ class MainWindow:
         button_frame.columnconfigure(0, weight=1)
         button_frame.columnconfigure(1, weight=1)
 
+        # -------------------------------------------------------------------------
+        # Verify Sites
+        # -------------------------------------------------------------------------
+
         self.verify_button = self.create_button(
             button_frame,
             text="Verify Sites",
@@ -350,9 +361,14 @@ class MainWindow:
         self.verify_button.grid(
             row=0,
             column=0,
+            columnspan=2,
             sticky="ew",
-            padx=(0, 5),
+            pady=(0, 8),
         )
+
+        # -------------------------------------------------------------------------
+        # Start Sweep
+        # -------------------------------------------------------------------------
 
         self.start_button = self.create_button(
             button_frame,
@@ -363,11 +379,15 @@ class MainWindow:
         )
 
         self.start_button.grid(
-            row=0,
-            column=1,
+            row=1,
+            column=0,
             sticky="ew",
-            padx=(5, 0),
+            padx=(0, 5),
         )
+
+        # -------------------------------------------------------------------------
+        # Cancel Sweep
+        # -------------------------------------------------------------------------
 
         self.cancel_button = self.create_button(
             button_frame,
@@ -376,9 +396,11 @@ class MainWindow:
             state="disabled",
         )
 
-        self.cancel_button.pack(
-            side="left",
-            padx=(10, 0),
+        self.cancel_button.grid(
+            row=1,
+            column=1,
+            sticky="ew",
+            padx=(5, 0),
         )
 
     def build_connected_sites_card(self, parent):
@@ -642,62 +664,39 @@ class MainWindow:
         parent,
         text=None,
         textvariable=None,
-        row=0,
-        column=0,
         **kwargs,
     ):
 
-        label = ttk.Label(
+        return ttk.Label(
             parent,
             text=text,
             textvariable=textvariable,
             **kwargs,
         )
 
-        label.grid(
-            row=row,
-            column=column,
-            sticky="w",
-            padx=5,
-            pady=5,
-        )
-
-        return label
-
     def create_entry(
         self,
         parent,
-        variable,
-        row,
+        textvariable,
+        **kwargs,
     ):
 
-        entry = ttk.Entry(
+        return ttk.Entry(
             parent,
-            textvariable=variable,
+            textvariable=textvariable,
+            **kwargs,
         )
-
-        entry.grid(
-            row=row,
-            column=1,
-            sticky="ew",
-            padx=5,
-            pady=5,
-        )
-
-        return entry
 
     def create_button(
         self,
         parent,
         text,
         command,
-        row,
-        column,
         style="Secondary.TButton",
         **kwargs,
     ):
 
-        button = ttk.Button(
+        return ttk.Button(
             parent,
             text=text,
             command=command,
@@ -705,15 +704,20 @@ class MainWindow:
             **kwargs,
         )
 
-        button.grid(
-            row=row,
-            column=column,
-            padx=5,
-            pady=5,
-            sticky="ew",
-        )
+    def create_labelFrame(
+        self,
+        parent,
+        text,
+        padding=10,
+        **kwargs,
+    ):
 
-        return button
+        return ttk.LabelFrame(
+            parent,
+            text=text,
+            padding=padding,
+            **kwargs,
+        )
 
     # =========================================================================
     # User Actions
@@ -768,32 +772,47 @@ class MainWindow:
 
     def verify_sites(self):
 
+        for site in SITES:
+
+            self.update_site_status(
+                site,
+                SITE_STATUS_VERIFYING,
+            )
+
+        self.root.update_idletasks()
+
         results = self.browser_service.verify_sites()
 
         all_ready = True
 
         for site, status in results:
 
-            label = self.site_status_labels[site]
-
-            label.config(
-                text=f"● {status}",
+            self.update_site_status(
+                site,
+                status,
             )
 
-            if status != "Ready":
+            if status != SITE_STATUS_READY:
+
                 all_ready = False
 
         if all_ready:
 
             self.set_status("All sites are ready.")
 
-            self.start_button.config(state="normal")
+            self.start_button.config(
+                state="normal",
+            )
 
         else:
 
-            self.set_status("One or more sites are not ready.")
+            self.set_status(
+                "One or more sites are not ready.",
+            )
 
-            self.start_button.config(state="disabled")
+            self.start_button.config(
+                state="disabled",
+            )
 
     def start_sweep(self):
 
@@ -815,20 +834,14 @@ class MainWindow:
             )
             return
 
-        for site, item in self.summary_rows.items():
-            self.summary_table.item(
-                item,
-                values=(
-                    site,
-                    "-",
-                    "-",
-                    "-",
-                    "-",
-                    "Pending",
-                ),
-            )
-
         self.clear_summary()
+
+        for site in SITES:
+
+            self.update_site_status(
+                site,
+                SITE_STATUS_READY,
+            )
 
         self.set_status("Starting...")
 
@@ -946,6 +959,11 @@ class MainWindow:
 
             site = event["site"]
 
+            self.update_site_status(
+                site,
+                SITE_STATUS_RUNNING,
+            )
+
             self.set_status(f"Searching {site}...")
 
             item = self.summary_rows.get(site)
@@ -960,7 +978,7 @@ class MainWindow:
                         "-",
                         "-",
                         "-",
-                        "Running",
+                        SITE_STATUS_RUNNING,
                     ),
                 )
 
@@ -968,13 +986,9 @@ class MainWindow:
 
         if event_type == EVENT_PROGRESS:
 
-            self.progress.set(
-                f'{event["current"]} / {event["total"]}'
-            )
+            self.progress.set(f'{event["current"]} / {event["total"]}')
 
-            self.current.set(
-                event["control_number"]
-            )
+            self.current.set(event["control_number"])
 
             self.progress_bar["maximum"] = event["total"]
 
@@ -982,7 +996,40 @@ class MainWindow:
 
             return
 
+        if event_type == EVENT_SITE_PROGRESS:
+
+            item = self.summary_rows.get(
+                event["site"],
+            )
+
+            if item is not None:
+
+                self.summary_table.item(
+                    item,
+                    values=(
+                        event["site"],
+                        event["found"],
+                        event["not_found"],
+                        event["errors"],
+                        "-",
+                        SITE_STATUS_RUNNING,
+                    ),
+                )
+
+            return
+
         if event_type == EVENT_SITE_COMPLETE:
+
+            status = SITE_STATUS_COMPLETED
+
+            if event["errors"] > 0:
+
+                status = SITE_STATUS_ERROR
+
+            self.update_site_status(
+                event["site"],
+                status,
+            )
 
             self.append_summary(
                 site=event["site"],
@@ -1024,7 +1071,7 @@ class MainWindow:
         if item is None:
             return
 
-        status = "Completed"
+        status = SITE_STATUS_COMPLETED
 
         if errors > 0:
             status = "Completed with Errors"
@@ -1083,7 +1130,7 @@ class MainWindow:
 
         self.enable_controls()
 
-        self.set_status("Completed")
+        self.set_status(SITE_STATUS_COMPLETED)
 
         messagebox.showinfo(
             "Sweep Complete",
@@ -1200,6 +1247,34 @@ class MainWindow:
         self.log_text.delete("1.0", tk.END)
 
         self.log_text.configure(state="disabled")
+
+    def update_site_status(
+        self,
+        site,
+        status,
+    ):
+
+        label = self.site_status_labels.get(site)
+
+        if label is None:
+            return
+
+        color_map = {
+            SITE_STATUS_NOT_CHECKED: "#808080",
+            SITE_STATUS_VERIFYING: "#D97706",
+            SITE_STATUS_READY: "#16A34A",
+            SITE_STATUS_RUNNING: "#2563EB",
+            SITE_STATUS_COMPLETED: "#15803D",
+            SITE_STATUS_ERROR: "#DC2626",
+        }
+
+        label.configure(
+            text=f"● {status}",
+            foreground=color_map.get(
+                status,
+                "#808080",
+            ),
+        )
 
     # =========================================================================
     # Timer
