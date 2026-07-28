@@ -5,6 +5,11 @@ from tkinter import filedialog, messagebox, ttk
 
 from gui.theme import Theme
 from gui.components import Header
+from gui.components import ConfigurationCard
+from gui.components import ConnectedSitesCard
+from gui.components import ProgressCard
+from gui.components import LogsCard
+from gui.components import SummaryCard
 
 from services.sweep_runner import SweepRunner
 from services.browser_service import BrowserService
@@ -123,47 +128,12 @@ class MainWindow:
 
     def build_header(self, parent):
 
-        frame = ttk.Frame(parent)
+        self.header = Header(parent)
 
-        frame.pack(
+        self.header.pack(
             fill="x",
             pady=(0, 15),
         )
-
-        frame.columnconfigure(0, weight=1)
-
-        title_frame = ttk.Frame(frame)
-        title_frame.grid(
-            row=0,
-            column=0,
-            sticky="w",
-        )
-
-        self.create_label(
-            title_frame,
-            text="DocSweep",
-            style="Header.TLabel",
-        ).pack(anchor="w")
-
-        self.create_label(
-            title_frame,
-            text="Search multiple documentation repositories automatically.",
-            style="Subtitle.TLabel",
-        ).pack(anchor="w", pady=(2, 0))
-
-        version_frame = ttk.Frame(frame)
-
-        version_frame.grid(
-            row=0,
-            column=1,
-            sticky="e",
-        )
-
-        self.create_label(
-            version_frame,
-            text=f"v{__version__}",
-            style="Subtitle.TLabel",
-        ).pack(anchor="e")
 
     def build_dashboard_top(self, parent):
 
@@ -244,447 +214,72 @@ class MainWindow:
 
     def build_configuration_card(self, parent):
 
-        frame = self.create_labelFrame(
+        self.configuration_card = ConfigurationCard(
             parent,
-            text="Configuration",
-            padding=10,
-            style="Card.TLabelframe",
+            self,
         )
 
-        frame.grid(
+        self.configuration_card.grid(
             row=0,
             column=0,
             sticky="nsew",
             padx=(0, 5),
-        )
-
-        frame.columnconfigure(1, weight=1)
-
-        # Excel File
-
-        self.create_label(
-            frame,
-            text="Excel File",
-        ).grid(
-            row=0,
-            column=0,
-            sticky="w",
-        )
-
-        self.create_entry(
-            frame,
-            textvariable=self.excel_path,
-        ).grid(
-            row=0,
-            column=1,
-            sticky="ew",
-            padx=5,
-        )
-
-        self.browse_excel_button = self.create_button(
-            frame,
-            text="Browse",
-            command=self.browse_excel,
-            style="Secondary.TButton",
-        )
-
-        self.browse_excel_button.grid(
-            row=0,
-            column=2,
-        )
-
-        # Output Folder
-
-        self.create_label(
-            frame,
-            text="Output Folder",
-        ).grid(
-            row=1,
-            column=0,
-            sticky="w",
-            pady=(10, 0),
-        )
-
-        self.create_entry(
-            frame,
-            textvariable=self.output_folder,
-        ).grid(
-            row=1,
-            column=1,
-            sticky="ew",
-            padx=5,
-            pady=(10, 0),
-        )
-
-        self.browse_output_button = self.create_button(
-            frame,
-            text="Browse",
-            command=self.browse_output,
-            style="Secondary.TButton",
-        )
-
-        self.browse_output_button.grid(
-            row=1,
-            column=2,
-            pady=(10, 0),
-        )
-
-        ttk.Separator(
-            frame,
-            orient="horizontal",
-        ).grid(
-            row=2,
-            column=0,
-            columnspan=3,
-            sticky="ew",
-            pady=15,
-        )
-
-        button_frame = ttk.Frame(frame)
-
-        button_frame.grid(
-            row=3,
-            column=0,
-            columnspan=3,
-            sticky="ew",
-        )
-
-        button_frame.columnconfigure(0, weight=1)
-        button_frame.columnconfigure(1, weight=1)
-
-        # -------------------------------------------------------------------------
-        # Verify Sites
-        # -------------------------------------------------------------------------
-
-        self.verify_button = self.create_button(
-            button_frame,
-            text="Verify Sites",
-            command=self.verify_sites,
-            state="disabled",
-            style="Secondary.TButton",
-        )
-
-        self.verify_button.grid(
-            row=0,
-            column=0,
-            columnspan=2,
-            sticky="ew",
-            pady=(0, 8),
-        )
-
-        # -------------------------------------------------------------------------
-        # Start Sweep
-        # -------------------------------------------------------------------------
-
-        self.start_button = self.create_button(
-            button_frame,
-            text="Start Sweep",
-            command=self.start_sweep,
-            state="disabled",
-            style="Primary.TButton",
-        )
-
-        self.start_button.grid(
-            row=1,
-            column=0,
-            sticky="ew",
-            padx=(0, 5),
-        )
-
-        # -------------------------------------------------------------------------
-        # Cancel Sweep
-        # -------------------------------------------------------------------------
-
-        self.cancel_button = self.create_button(
-            button_frame,
-            text="Cancel Sweep",
-            command=self.cancel_sweep,
-            state="disabled",
-        )
-
-        self.cancel_button.grid(
-            row=1,
-            column=1,
-            sticky="ew",
-            padx=(5, 0),
         )
 
     def build_connected_sites_card(self, parent):
 
-        frame = self.create_labelFrame(
+        self.connected_sites_card = ConnectedSitesCard(
             parent,
-            text="Connected Sites",
-            padding=10,
-            style="Card.TLabelframe",
+            self,
         )
 
-        frame.grid(
+        self.connected_sites_card.grid(
             row=0,
             column=1,
             sticky="nsew",
             padx=(5, 0),
         )
 
-        frame.columnconfigure(1, weight=1)
-
-        self.site_status_labels = {}
-
-        for row, site in enumerate(SITES):
-
-            self.create_label(
-                frame,
-                text=site,
-            ).grid(
-                row=row,
-                column=0,
-                sticky="w",
-                pady=6,
-            )
-
-            status = self.create_label(
-                frame,
-                text="● Not Checked",
-            )
-
-            status.grid(
-                row=row,
-                column=1,
-                sticky="e",
-                pady=6,
-            )
-
-            self.site_status_labels[site] = status
-
     def build_progress_card(self, parent):
 
-        frame = self.create_labelFrame(
+        self.progress_card = ProgressCard(
             parent,
-            text="Sweep Progress",
-            padding=10,
-            style="Card.TLabelframe",
+            self,
         )
 
-        frame.grid(
+        self.progress_card.grid(
             row=0,
             column=0,
             sticky="nsew",
             padx=(0, 5),
         )
 
-        frame.columnconfigure(1, weight=1)
-
-        labels = (
-            ("Status", self.status),
-            ("Progress", self.progress),
-            ("Control Number", self.current),
-            ("Elapsed", self.elapsed),
-        )
-
-        for row, (title, variable) in enumerate(labels):
-
-            self.create_label(
-                frame,
-                text=f"{title}:",
-            ).grid(
-                row=row,
-                column=0,
-                sticky="w",
-                pady=5,
-            )
-
-            self.create_label(
-                frame,
-                textvariable=variable,
-            ).grid(
-                row=row,
-                column=1,
-                sticky="w",
-                padx=(10, 0),
-                pady=5,
-            )
-
-        self.progress_bar = ttk.Progressbar(
-            frame,
-            mode="determinate",
-        )
-
-        self.progress_bar.grid(
-            row=len(labels),
-            column=0,
-            columnspan=2,
-            sticky="ew",
-            pady=(20, 0),
-        )
-
     def build_logs_card(self, parent):
 
-        frame = self.create_labelFrame(
+        self.logs_card = LogsCard(
             parent,
-            text="Logs",
-            padding=10,
-            style="Card.TLabelframe",
+            self,
         )
 
-        frame.grid(
+        self.logs_card.grid(
             row=0,
             column=1,
             sticky="nsew",
             padx=(5, 0),
         )
 
-        self.log_text = tk.Text(
-            frame,
-            height=10,
-            state="disabled",
-            wrap="word",
-        )
-
-        self.log_text.tag_configure(
-            LOG_INFO,
-            foreground="#404040",
-        )
-
-        self.log_text.tag_configure(
-            LOG_ACTIVITY,
-            foreground="#2563EB",
-        )
-
-        self.log_text.tag_configure(
-            LOG_SUCCESS,
-            foreground="#16A34A",
-        )
-
-        self.log_text.tag_configure(
-            LOG_WARNING,
-            foreground="#D97706",
-        )
-
-        self.log_text.tag_configure(
-            LOG_ERROR,
-            foreground="#DC2626",
-        )
-
-        scrollbar = ttk.Scrollbar(
-            frame,
-            orient="vertical",
-            command=self.log_text.yview,
-        )
-
-        self.log_text.configure(
-            yscrollcommand=scrollbar.set,
-        )
-
-        self.log_text.pack(
-            side="left",
-            fill="both",
-            expand=True,
-        )
-
-        scrollbar.pack(
-            side="right",
-            fill="y",
-        )
-
     def build_summary_card(self, parent):
 
-        frame = self.create_labelFrame(
+        self.summary_card = SummaryCard(
             parent,
-            text="Summary",
-            padding=10,
-            style="Card.TLabelframe",
+            self,
         )
 
-        frame.pack(
+        self.summary_card.pack(
             fill="both",
             expand=True,
             pady=(0, 10),
         )
-
-        columns = (
-            "site",
-            "found",
-            "not_found",
-            "errors",
-            "elapsed",
-            "status",
-        )
-
-        self.summary_table = ttk.Treeview(
-            frame,
-            columns=columns,
-            show="headings",
-        )
-
-        headings = {
-            "site": "Site",
-            "found": "Found",
-            "not_found": "Not Found",
-            "errors": "Errors",
-            "elapsed": "Elapsed",
-            "status": "Status",
-        }
-
-        widths = {
-            "site": 220,
-            "found": 70,
-            "not_found": 90,
-            "errors": 70,
-            "elapsed": 110,
-            "status": 120,
-        }
-
-        for column in columns:
-
-            self.summary_table.heading(
-                column,
-                text=headings[column],
-            )
-
-            self.summary_table.column(
-                column,
-                width=widths[column],
-                anchor="center" if column != "site" else "w",
-            )
-
-        scrollbar = ttk.Scrollbar(
-            frame,
-            orient="vertical",
-            command=self.summary_table.yview,
-        )
-
-        self.summary_table.configure(
-            yscrollcommand=scrollbar.set,
-        )
-
-        self.summary_table.pack(
-            side="left",
-            fill="both",
-            expand=True,
-        )
-
-        scrollbar.pack(
-            side="right",
-            fill="y",
-        )
-
-        self.summary_rows = {}
-
-        for site in SITES:
-
-            item = self.summary_table.insert(
-                "",
-                "end",
-                values=(
-                    site,
-                    "-",
-                    "-",
-                    "-",
-                    "-",
-                    "Pending",
-                ),
-            )
-
-            self.summary_rows[site] = item
 
     # =========================================================================
     # Widget Factory
