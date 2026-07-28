@@ -10,6 +10,11 @@ from services.browser_service import BrowserService
 
 from utils.logger import get_logger
 from utils.constants import (
+    LOG_INFO,
+    LOG_ACTIVITY,
+    LOG_SUCCESS,
+    LOG_WARNING,
+    LOG_ERROR,
     SITES,
     SITE_STATUS_NOT_CHECKED,
     SITE_STATUS_VERIFYING,
@@ -533,6 +538,31 @@ class MainWindow:
             wrap="word",
         )
 
+        self.log_text.tag_configure(
+            LOG_INFO,
+            foreground="#404040",
+        )
+
+        self.log_text.tag_configure(
+            LOG_ACTIVITY,
+            foreground="#2563EB",
+        )
+
+        self.log_text.tag_configure(
+            LOG_SUCCESS,
+            foreground="#16A34A",
+        )
+
+        self.log_text.tag_configure(
+            LOG_WARNING,
+            foreground="#D97706",
+        )
+
+        self.log_text.tag_configure(
+            LOG_ERROR,
+            foreground="#DC2626",
+        )
+
         scrollbar = ttk.Scrollbar(
             frame,
             orient="vertical",
@@ -916,7 +946,10 @@ class MainWindow:
 
         self.set_status("Cancelling...")
 
-        self.append_log("Cancellation requested by user...")
+        self.append_log(
+            "Cancellation requested by user...",
+            LOG_WARNING,
+        )
 
     def on_close(self):
 
@@ -1177,20 +1210,35 @@ class MainWindow:
             message,
         )
 
-    def append_log(self, message):
+    def append_log(
+        self,
+        message,
+        level=LOG_INFO,
+    ):
 
         timestamp = time.strftime("%H:%M:%S")
 
-        self.log_text.configure(state="normal")
+        self.log_text.configure(
+            state="normal",
+        )
 
         self.log_text.insert(
             "end",
-            f"[{timestamp}] {message}\n",
+            f"[{timestamp}] ",
+            LOG_INFO,
+        )
+
+        self.log_text.insert(
+            "end",
+            f"{message}\n",
+            level,
         )
 
         self.log_text.see("end")
 
-        self.log_text.configure(state="disabled")
+        self.log_text.configure(
+            state="disabled",
+        )
 
     def finish_sweep(self):
 

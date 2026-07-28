@@ -35,3 +35,13 @@ SITE_STATUSES = (
     SITE_STATUS_COMPLETED,
     SITE_STATUS_ERROR,
 )
+
+# =========================================================================
+# Log Levels
+# =========================================================================
+
+LOG_INFO = "INFO"
+LOG_ACTIVITY = "ACTIVITY"
+LOG_SUCCESS = "SUCCESS"
+LOG_WARNING = "WARNING"
+LOG_ERROR = "ERROR"
