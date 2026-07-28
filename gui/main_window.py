@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
 from gui.theme import Theme
+from gui.components import Header
 
 from services.sweep_runner import SweepRunner
 from services.browser_service import BrowserService
@@ -41,7 +42,7 @@ from version import __version__
 class MainWindow:
 
     WINDOW_WIDTH = 850
-    WINDOW_HEIGHT = 750
+    WINDOW_HEIGHT = 800
 
     # =========================================================================
     # Initialization
@@ -112,11 +113,11 @@ class MainWindow:
 
         self.build_header(container)
 
-        self.build_upper_section(container)
+        self.build_dashboard_top(container)
 
-        self.build_middle_section(container)
+        self.build_dashboard_center(container)
 
-        self.build_lower_section(container)
+        self.build_dashboard_bottom(container)
 
         self.build_footer(container)
 
@@ -164,7 +165,7 @@ class MainWindow:
             style="Subtitle.TLabel",
         ).pack(anchor="e")
 
-    def build_upper_section(self, parent):
+    def build_dashboard_top(self, parent):
 
         frame = ttk.Frame(parent)
 
@@ -180,7 +181,7 @@ class MainWindow:
 
         self.build_connected_sites_card(frame)
 
-    def build_middle_section(self, parent):
+    def build_dashboard_center(self, parent):
 
         frame = ttk.Frame(parent)
 
@@ -197,7 +198,7 @@ class MainWindow:
 
         self.build_logs_card(frame)
 
-    def build_lower_section(self, parent):
+    def build_dashboard_bottom(self, parent):
 
         self.build_summary_card(parent)
 

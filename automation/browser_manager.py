@@ -1,35 +1,43 @@
 from pathlib import Path
-from utils.logger import get_logger
+
 from utils.exceptions import BrowserNotFoundError
+from utils.logger import get_logger
 
 logger = get_logger(__name__)
 
 
 class BrowserManager:
 
-    def __init__(self):
-        # DocSweep root directory
-        self.base_dir = Path(__file__).resolve().parent.parent
+    CHROME_PATH = Path(
+        r"C:\Program Files\Google\chrome-win64\chrome.exe"
+    )
 
-        # browser/
-        self.browser_dir = self.base_dir / "browser"
+    DRIVER_PATH = Path(
+        r"C:\Program Files\Google\chromedriver-win64\chromedriver.exe"
+    )
 
     def get_chrome_path(self):
-        return self.browser_dir / "chrome-win64" / "chrome.exe"
+        return self.CHROME_PATH
 
     def get_driver_path(self):
-        return self.browser_dir / "chromedriver-win64" / "chromedriver.exe"
+        return self.DRIVER_PATH
 
     def validate(self):
 
-        logger.info("Validating browser files...")
+        logger.info("Validating browser installation...")
 
-        if not self.get_chrome_path().exists():
+        if not self.CHROME_PATH.exists():
             raise BrowserNotFoundError(
-                f"Chrome for Testing not found:\n{self.get_chrome_path()}"
+                "Chrome for Testing was not found.\n\n"
+                f"Expected location:\n{self.CHROME_PATH}\n\n"
+                "Please install Chrome for Testing and try again."
             )
 
-        if not self.get_driver_path().exists():
-            raise FileNotFoundError(
-                f"ChromeDriver not found:\n{self.get_driver_path()}"
+        if not self.DRIVER_PATH.exists():
+            raise BrowserNotFoundError(
+                "ChromeDriver was not found.\n\n"
+                f"Expected location:\n{self.DRIVER_PATH}\n\n"
+                "Please install the matching ChromeDriver and try again."
             )
+
+        logger.info("Browser validation successful.")
