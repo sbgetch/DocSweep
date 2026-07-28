@@ -14,7 +14,7 @@ class ConnectedSitesCard(Card):
 
         super().__init__(
             parent,
-            title="Connected Sites",
+            title="🌐 Repositories",
         )
 
         self.main_window = main_window

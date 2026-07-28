@@ -14,7 +14,7 @@ class SummaryCard(Card):
 
         super().__init__(
             parent,
-            title="Summary",
+            title="📋 Summary",
         )
 
         self.main_window = main_window

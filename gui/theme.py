@@ -14,32 +14,29 @@ class Theme:
     # Background Colors
     # ==========================================================================
 
-    WINDOW_BG = "#F5F6F8"
+    WINDOW_BG = "#F4F6F9"
     CARD_BG = "#FFFFFF"
 
     # ==========================================================================
     # Text Colors
     # ==========================================================================
 
-    TEXT = "#222222"
+    TEXT = "#1F2937"
     MUTED = "#6B7280"
-    TEXT_SECONDARY = "#6B7280"
-    TEXT_DISABLED = "#9CA3AF"
 
     # ==========================================================================
     # Border Colors
     # ==========================================================================
 
-    BORDER = "#D9D9D9"
-    DIVIDER = "#E5E7EB"
+    BORDER = "#D9DDE3"
 
     # ==========================================================================
     # Status Colors
     # ==========================================================================
 
-    SUCCESS = "#2E9E44"
-    WARNING = "#F4B400"
-    ERROR = "#D93025"
+    SUCCESS = "#16A34A"
+    WARNING = "#D97706"
+    ERROR = "#DC2626"
     INFO = "#2563EB"
 
     # ==========================================================================
@@ -57,16 +54,16 @@ class Theme:
     # Fonts
     # ==========================================================================
 
-    TITLE_FONT = ("Calibri", 22, "bold")
-    SUBTITLE_FONT = ("Calibri", 10)
+    TITLE_FONT = ("Segoe UI", 24, "bold")
+    SUBTITLE_FONT = ("Segoe UI", 10)
 
-    HEADING_FONT = ("Calibri", 11, "bold")
+    HEADING_FONT = ("Segoe UI", 10, "bold")
 
-    BODY_FONT = ("Calibri", 10)
-    BODY_BOLD_FONT = ("Calibri", 10, "bold")
+    BODY_FONT = ("Segoe UI", 10)
+    BODY_BOLD_FONT = ("Segoe UI", 10, "bold")
 
-    SMALL_FONT = ("Calibri", 9)
-    FOOTER_FONT = ("Calibri", 8)
+    SMALL_FONT = ("Segoe UI", 9)
+    FOOTER_FONT = ("Segoe UI", 9)
 
     @staticmethod
     def configure(root):
@@ -74,6 +71,14 @@ class Theme:
         style = ttk.Style(root)
 
         style.theme_use("clam")
+
+        # ======================================================================
+        # Window
+        # ======================================================================
+
+        root.configure(
+            background=Theme.WINDOW_BG,
+        )
 
         # ======================================================================
         # General
@@ -86,47 +91,63 @@ class Theme:
 
         style.configure(
             "TFrame",
-            background=Theme.WINDOW_BG,
+            background=Theme.CARD_BG,
         )
 
         style.configure(
             "TLabel",
-            background=Theme.WINDOW_BG,
+            background=Theme.CARD_BG,
             foreground=Theme.TEXT,
+            font=Theme.BODY_FONT,
         )
 
         # ======================================================================
-        # Custom Label Styles
+        # Label Styles
         # ======================================================================
 
         style.configure(
             "Heading.TLabel",
-            background=Theme.WINDOW_BG,
+            background=Theme.CARD_BG,
             foreground=Theme.TEXT,
             font=Theme.HEADING_FONT,
         )
 
         style.configure(
             "Muted.TLabel",
-            background=Theme.WINDOW_BG,
+            background=Theme.CARD_BG,
             foreground=Theme.MUTED,
+            font=Theme.SUBTITLE_FONT,
+        )
+
+        style.configure(
+            "Value.TLabel",
+            background=Theme.CARD_BG,
+            foreground=Theme.PRIMARY,
+            font=("Segoe UI", 11, "bold"),
+        )
+
+        style.configure(
+            "Version.TLabel",
+            background=Theme.WINDOW_BG,
+            foreground=Theme.PRIMARY,
+            font=("Segoe UI", 11, "bold"),
         )
 
         style.configure(
             "Success.TLabel",
-            background=Theme.WINDOW_BG,
+            background=Theme.CARD_BG,
             foreground=Theme.SUCCESS,
         )
 
         style.configure(
             "Warning.TLabel",
-            background=Theme.WINDOW_BG,
+            background=Theme.CARD_BG,
             foreground=Theme.WARNING,
         )
 
         style.configure(
             "Error.TLabel",
-            background=Theme.WINDOW_BG,
+            background=Theme.CARD_BG,
             foreground=Theme.ERROR,
         )
 
@@ -139,14 +160,14 @@ class Theme:
             background=Theme.CARD_BG,
             borderwidth=1,
             relief="solid",
-            padding=Theme.SPACE_LG,
+            bordercolor=Theme.BORDER,
         )
 
         style.configure(
             "Card.TLabelframe.Label",
             background=Theme.CARD_BG,
             foreground=Theme.TEXT,
-            font=Theme.HEADING_FONT,
+            font=("Segoe UI", 10, "bold"),
         )
 
         # ======================================================================
@@ -156,21 +177,13 @@ class Theme:
         style.configure(
             "Primary.TButton",
             padding=(14, 8),
-            font=Theme.HEADING_FONT,
-            foreground="white",
-        )
-
-        style.map(
-            "Primary.TButton",
-            background=[
-                ("active", Theme.PRIMARY_HOVER),
-                ("!disabled", Theme.PRIMARY),
-            ],
+            font=("Segoe UI", 10, "bold"),
         )
 
         style.configure(
             "Secondary.TButton",
             padding=(12, 8),
+            font=("Segoe UI", 10),
         )
 
         # ======================================================================
@@ -188,13 +201,27 @@ class Theme:
 
         style.configure(
             "Treeview",
-            rowheight=34,
+            background="white",
+            fieldbackground="white",
+            foreground=Theme.TEXT,
+            rowheight=30,
             borderwidth=0,
+            font=Theme.BODY_FONT,
         )
 
         style.configure(
             "Treeview.Heading",
-            font=Theme.HEADING_FONT,
+            background=Theme.PRIMARY,
+            foreground="white",
+            font=("Segoe UI", 10, "bold"),
+            relief="flat",
+        )
+
+        style.map(
+            "Treeview.Heading",
+            background=[
+                ("active", Theme.PRIMARY_HOVER),
+            ],
         )
 
         # ======================================================================
@@ -203,7 +230,10 @@ class Theme:
 
         style.configure(
             "Horizontal.TProgressbar",
-            thickness=14,
+            thickness=16,
+            background=Theme.PRIMARY,
+            troughcolor="#E5E7EB",
+            borderwidth=0,
         )
 
         return style

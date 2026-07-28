@@ -46,8 +46,8 @@ from version import __version__
 
 class MainWindow:
 
-    WINDOW_WIDTH = 850
-    WINDOW_HEIGHT = 800
+    WINDOW_WIDTH = 1100
+    WINDOW_HEIGHT = 880
 
     # =========================================================================
     # Initialization
@@ -72,11 +72,20 @@ class MainWindow:
 
         Theme.configure(self.root)
 
+        self.root.configure(
+            bg=Theme.WINDOW_BG,
+        )
+
         self.browser_service = BrowserService()
 
-        self.root.geometry(f"{self.WINDOW_WIDTH}x{self.WINDOW_HEIGHT}")
+        self.root.after(
+            100,
+            self.initialize_browser,
+        )
 
-        self.root.minsize(800, 650)
+        self.center_window()
+
+        self.root.minsize(1100, 880)
 
         self.excel_path = tk.StringVar()
 
@@ -99,6 +108,48 @@ class MainWindow:
     def run(self):
 
         self.root.mainloop()
+
+    def center_window(self):
+
+        self.root.update_idletasks()
+
+        width = self.WINDOW_WIDTH
+        height = self.WINDOW_HEIGHT
+
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+
+        x = (screen_width - width) // 2
+        y = (screen_height - height) // 2
+
+        self.root.geometry(
+            f"{width}x{height}+{x}+{y}"
+        )
+
+    def initialize_browser(self):
+
+        try:
+
+            self.set_status("Launching Chrome for Testing...")
+
+            self.browser_service.launch()
+
+            self.set_status(
+                "Browser ready. Please sign in, then click Verify Sites."
+            )
+
+            self.verify_button.config(
+                state="normal",
+            )
+
+        except Exception as ex:
+
+            messagebox.showerror(
+                "Browser Error",
+                str(ex),
+            )
+
+            self.set_status("Browser initialization failed.")
 
     # =============================================================================
     # UI BUILDERS
@@ -188,7 +239,7 @@ class MainWindow:
 
         frame.pack(fill="x")
 
-        self.footer_status = tk.StringVar(value="Ready")
+        self.footer_status = tk.StringVar(value="Status: Ready")
 
         self.create_label(
             frame,
@@ -723,7 +774,7 @@ class MainWindow:
 
     def disable_controls(self):
 
-        self.launch_button.config(state="disabled")
+        # self.launch_button.config(state="disabled")
 
         self.verify_button.config(state="disabled")
 
@@ -737,7 +788,7 @@ class MainWindow:
 
     def enable_controls(self):
 
-        self.launch_button.config(state="normal")
+        # self.launch_button.config(state="normal")
 
         self.verify_button.config(state="normal")
 
@@ -851,7 +902,7 @@ class MainWindow:
         self.status.set(status)
 
         if hasattr(self, "footer_status"):
-            self.footer_status.set(status)
+            self.footer_status.set(f"Status: {status}")
 
         if hasattr(self, "log_text"):
             self.append_log(status)

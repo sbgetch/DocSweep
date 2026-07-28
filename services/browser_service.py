@@ -1,3 +1,9 @@
+from selenium.common.exceptions import (
+    InvalidSessionIdException,
+    NoSuchWindowException,
+    WebDriverException,
+)
+
 from automation.browser import Browser
 
 from automation.vertiv import VertivSite
@@ -24,6 +30,16 @@ class BrowserService:
         self.browser.open_startup_tabs()
 
     def verify_sites(self):
+
+        try:
+            # Verify that the browser session is still alive
+            _ = self.driver.window_handles
+
+        except (InvalidSessionIdException, NoSuchWindowException, WebDriverException):
+
+            return [
+                ("Browser", "Browser has been closed. Please relaunch DocSweep.")
+            ]
 
         sites = [
             ("Vertiv", VertivSite),

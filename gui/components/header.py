@@ -1,7 +1,6 @@
 from tkinter import ttk
 
 from gui.theme import Theme
-from version import __version__
 
 
 class Header(ttk.Frame):
@@ -47,33 +46,11 @@ class Header(ttk.Frame):
 
         subtitle = ttk.Label(
             left,
-            text="Search multiple documentation repositories automatically.",
+            text="Search multiple repositories automatically.",
             style="Muted.TLabel",
         )
 
         subtitle.pack(
             anchor="w",
             pady=(2, 0),
-        )
-
-        # ------------------------------------------------------------------
-        # Right
-        # ------------------------------------------------------------------
-
-        right = ttk.Frame(self)
-
-        right.grid(
-            row=0,
-            column=1,
-            sticky="e",
-        )
-
-        version = ttk.Label(
-            right,
-            text=f"v{__version__}",
-            style="Heading.TLabel",
-        )
-
-        version.pack(
-            anchor="e",
         )

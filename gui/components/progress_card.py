@@ -13,7 +13,7 @@ class ProgressCard(Card):
 
         super().__init__(
             parent,
-            title="Sweep Progress",
+            title="📊 Sweep Progress",
         )
 
         self.main_window = main_window
@@ -49,6 +49,7 @@ class ProgressCard(Card):
             ttk.Label(
                 self,
                 textvariable=variable,
+                style="Heading.TLabel",
             ).grid(
                 row=row,
                 column=1,

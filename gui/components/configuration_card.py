@@ -13,7 +13,7 @@ class ConfigurationCard(Card):
 
         super().__init__(
             parent,
-            title="Configuration",
+            title="📁 Configuration",
         )
 
         self.main_window = main_window

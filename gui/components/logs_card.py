@@ -21,7 +21,7 @@ class LogsCard(Card):
 
         super().__init__(
             parent,
-            title="Logs",
+            title="📝 Logs",
         )
 
         self.main_window = main_window
@@ -33,8 +33,9 @@ class LogsCard(Card):
         self.main_window.log_text = tk.Text(
             self,
             height=10,
-            state="disabled",
             wrap="word",
+            state="disabled",
+            font=("Consolas", 9),
         )
 
         self.main_window.log_text.tag_configure(
