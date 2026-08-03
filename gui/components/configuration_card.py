@@ -60,58 +60,28 @@ class ConfigurationCard(Card):
         )
 
         # ------------------------------------------------------------------
-        # Output Folder
+        # Separator
         # ------------------------------------------------------------------
-
-        ttk.Label(
-            self,
-            text="Output Folder",
-        ).grid(
-            row=1,
-            column=0,
-            sticky="w",
-            pady=(10, 0),
-        )
-
-        ttk.Entry(
-            self,
-            textvariable=self.main_window.output_folder,
-        ).grid(
-            row=1,
-            column=1,
-            sticky="ew",
-            padx=5,
-            pady=(10, 0),
-        )
-
-        self.main_window.browse_output_button = ttk.Button(
-            self,
-            text="Browse",
-            command=self.main_window.browse_output,
-            style="Secondary.TButton",
-        )
-
-        self.main_window.browse_output_button.grid(
-            row=1,
-            column=2,
-            pady=(10, 0),
-        )
 
         ttk.Separator(
             self,
             orient="horizontal",
         ).grid(
-            row=2,
+            row=1,
             column=0,
             columnspan=3,
             sticky="ew",
             pady=15,
         )
 
+        # ------------------------------------------------------------------
+        # Buttons
+        # ------------------------------------------------------------------
+
         button_frame = ttk.Frame(self)
 
         button_frame.grid(
-            row=3,
+            row=2,
             column=0,
             columnspan=3,
             sticky="ew",

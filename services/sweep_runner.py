@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from excel.reader import ExcelReader
 from excel.writer import ExcelWriter
 
@@ -32,7 +30,7 @@ class SweepRunner:
 
             self.progress_callback(**kwargs)
 
-    def run(self, input_file: str, output_folder: str):
+    def run(self, input_file: str):
 
         self.log("Reading Excel...")
 
@@ -74,34 +72,28 @@ class SweepRunner:
             status="Writing Excel...",
         )
 
-        output_file = str(
-            Path(output_folder) / Path(input_file).name
-        )
-
         writer = ExcelWriter()
 
         writer.save(
-            output_file,
+            input_file,
             documents,
         )
 
-        self.log(f"Workbook saved: {output_file}")
+        self.log(f"Workbook saved: {input_file}")
 
         if completed:
 
             self.report_progress(
                 event=EVENT_SWEEP_COMPLETE,
-                output_file=output_file,
             )
 
         else:
 
             self.report_progress(
                 event=EVENT_SWEEP_CANCELLED,
-                output_file=output_file,
             )
 
-        return output_file
+        return input_file
 
     def log(self, message: str):
 

@@ -47,7 +47,7 @@ from version import __version__
 class MainWindow:
 
     WINDOW_WIDTH = 1100
-    WINDOW_HEIGHT = 880
+    WINDOW_HEIGHT = 750
 
     # =========================================================================
     # Initialization
@@ -76,20 +76,11 @@ class MainWindow:
             bg=Theme.WINDOW_BG,
         )
 
-        self.browser_service = BrowserService()
-
-        self.root.after(
-            100,
-            self.initialize_browser,
-        )
-
         self.center_window()
 
         self.root.minsize(1100, 880)
 
         self.excel_path = tk.StringVar()
-
-        self.output_folder = tk.StringVar()
 
         self.status = tk.StringVar(value="Idle")
 
@@ -104,6 +95,13 @@ class MainWindow:
         self.timer_start = None
 
         self.build_ui()
+
+        self.browser_service = BrowserService()
+
+        self.root.after(
+            100,
+            self.initialize_browser,
+        )
 
     def run(self):
 
@@ -122,9 +120,7 @@ class MainWindow:
         x = (screen_width - width) // 2
         y = (screen_height - height) // 2
 
-        self.root.geometry(
-            f"{width}x{height}+{x}+{y}"
-        )
+        self.root.geometry(f"{width}x{height}+{x}+{y}")
 
     def initialize_browser(self):
 
@@ -134,9 +130,7 @@ class MainWindow:
 
             self.browser_service.launch()
 
-            self.set_status(
-                "Browser ready. Please sign in, then click Verify Sites."
-            )
+            self.set_status("Browser ready. Please sign in, then click Verify Sites.")
 
             self.verify_button.config(
                 state="normal",
@@ -410,14 +404,6 @@ class MainWindow:
 
             self.excel_path.set(filename)
 
-    def browse_output(self):
-
-        folder = filedialog.askdirectory(title="Select Output Folder")
-
-        if folder:
-
-            self.output_folder.set(folder)
-
     def launch_browser(self):
 
         try:
@@ -502,15 +488,6 @@ class MainWindow:
             )
             return
 
-        output_folder = self.output_folder.get().strip()
-
-        if not output_folder:
-            messagebox.showwarning(
-                "Missing Output Folder",
-                "Please select an output folder.",
-            )
-            return
-
         self.clear_summary()
 
         for site in SITES:
@@ -552,7 +529,6 @@ class MainWindow:
 
             runner.run(
                 self.excel_path.get(),
-                self.output_folder.get(),
             )
 
         except Exception as ex:
@@ -723,17 +699,13 @@ class MainWindow:
 
         if event_type == EVENT_SWEEP_COMPLETE:
 
-            self.sweep_completed(
-                event["output_file"],
-            )
+            self.sweep_completed()
 
             return
 
         if event_type == EVENT_SWEEP_CANCELLED:
 
-            self.sweep_cancelled(
-                event["output_file"],
-            )
+            self.sweep_cancelled()
 
             return
 
@@ -784,8 +756,6 @@ class MainWindow:
 
         self.browse_excel_button.config(state="disabled")
 
-        self.browse_output_button.config(state="disabled")
-
     def enable_controls(self):
 
         # self.launch_button.config(state="normal")
@@ -798,9 +768,7 @@ class MainWindow:
 
         self.browse_excel_button.config(state="normal")
 
-        self.browse_output_button.config(state="normal")
-
-    def sweep_completed(self, output_file):
+    def sweep_completed(self):
 
         self.sweep_running = False
 
@@ -814,10 +782,10 @@ class MainWindow:
 
         messagebox.showinfo(
             "Sweep Complete",
-            f"Output saved to:\n\n{output_file}",
+            "The selected Excel workbook has been updated successfully.",
         )
 
-    def sweep_cancelled(self, output_file):
+    def sweep_cancelled(self):
 
         self.sweep_running = False
 
@@ -832,8 +800,7 @@ class MainWindow:
         messagebox.showinfo(
             "Sweep Cancelled",
             "The sweep was cancelled.\n\n"
-            "Partial results were saved to:\n\n"
-            f"{output_file}",
+            "Partial results have been written to the selected Excel workbook.",
         )
 
         if self.exit_after_cancel:
